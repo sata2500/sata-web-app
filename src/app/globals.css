@@ -1,26 +1,167 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary: oklch(0.5 0.2 250);
+  --color-secondary: oklch(0.8 0.2 140);
+  --color-background: #ffffff;
+  --color-foreground: #171717;
+  --color-card: #ffffff;
+  --color-card-foreground: #171717;
+  --color-border: #e5e7eb;
+  --border-radius: 0.5rem;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-heading: "Poppins", system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  --color-background: #0a0a0a;
+  --color-foreground: #ededed;
+  --color-card: #171717;
+  --color-card-foreground: #ededed;
+  --color-border: #2e2e2e;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Temel stiller */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+}
+
+h1 {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+
+h2 {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+h4 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+h5 {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+h6 {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Bileşen stilleri */
+.container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  max-width: 80rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  transition-property: color, background-color, border-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  filter: brightness(0.9);
+  text-decoration: none;
+}
+
+.btn-secondary {
+  background-color: var(--color-secondary);
+  color: white;
+}
+
+.btn-secondary:hover {
+  filter: brightness(0.9);
+  text-decoration: none;
+}
+
+.btn-outline {
+  border: 1px solid var(--color-border);
+  background-color: transparent;
+  color: var(--color-foreground);
+}
+
+.btn-outline:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  text-decoration: none;
+}
+
+.dark .btn-outline:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.card {
+  background-color: var(--color-card);
+  color: var(--color-card-foreground);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Yardımcı sınıflar */
+.text-balance {
+  text-wrap: balance;
+}
+
+/* Geçiş animasyonları */
+.transition-colors {
+  transition-property: color, background-color, border-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.transition-transform {
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Tailwind yardımcı sınıfları yüklenirken flash önleme */
+html.dark {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
 }
