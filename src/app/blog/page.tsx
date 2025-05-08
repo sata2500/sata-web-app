@@ -1,5 +1,4 @@
 // src/app/blog/page.tsx
-
 import { Metadata } from 'next';
 import { Container } from '@/components/ui/container';
 import { BlogPostGrid } from '@/components/blog/blog-post-grid';
@@ -22,6 +21,7 @@ export default async function BlogPage({
 }) {
   // searchParams'ı await et - Next.js 15'te zorunlu
   const params = await searchParams;
+  // searchParams'tan tag değerini string olarak al
   const selectedTag = params.tag || '';
   const tags = await getBlogTags();
   
@@ -38,8 +38,8 @@ export default async function BlogPage({
             <BlogTagFilter tags={tags} selectedTag={selectedTag} />
           </div>
           
-          {/* Blog yazıları grid */}
-          <BlogPostGrid selectedTag={selectedTag} />
+          {/* Blog yazıları grid - key ekleyerek React'a yeniden render etmesini sağla */}
+          <BlogPostGrid selectedTag={selectedTag} key={`blog-grid-${selectedTag}`} />
         </div>
       </Container>
     </>

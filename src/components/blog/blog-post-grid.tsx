@@ -1,10 +1,9 @@
 // src/components/blog/blog-post-grid.tsx
-
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react'; // useCallback ekledim
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image'; // Image bileşenini ekledim
+import Image from 'next/image';
 import { BlogPost } from '@/types/blog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,17 +22,32 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({ selectedTag = '' }) 
   const [hasMore, setHasMore] = useState(false);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<BlogPost> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Render sayısını takip etmek için ref
+  const hasLoadedRef = useRef(false);
+  // Önceki tag değerini saklamak için ref (dependency'leri azaltmak için)
+  const prevTagRef = useRef(selectedTag);
+  // lastDoc değerinin mutable bir referansı
+  const lastDocRef = useRef(lastDoc);
 
-  // Blog yazılarını yükleme - useCallback ile sarıyoruz
+  // lastDoc değiştiğinde ref'i güncelleyin
+  useEffect(() => {
+    lastDocRef.current = lastDoc;
+  }, [lastDoc]);
+
+  // Blog yazılarını yükleme - useCallback ile memoize edilmiş
   const loadPosts = useCallback(async (loadMore = false) => {
-    setLoading(true);
+    if (!loadMore) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
+      console.log("Fetching posts with tag:", selectedTag, "loadMore:", loadMore); 
+      
       const result = await getBlogPosts({
         status: 'published',
-        tag: selectedTag || '',
-        startAfterDoc: loadMore ? lastDoc : null
+        tag: selectedTag,
+        startAfterDoc: loadMore ? lastDocRef.current : null
       });
 
       if (loadMore) {
@@ -50,12 +64,23 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({ selectedTag = '' }) 
     } finally {
       setLoading(false);
     }
-  }, [selectedTag, lastDoc]); // Bağımlılıkları ekledik
+  }, [selectedTag]); // Sadece selectedTag'e bağımlı, lastDoc için useRef kullanıyoruz
 
-  // İlk yükleme ve tag değiştiğinde yeniden yükle
+  // İlk yükleme ve tag değişikliklerini kontrol eden effect
   useEffect(() => {
-    loadPosts();
-  }, [loadPosts]); // dependency array'e loadPosts ekledik
+    // Tag değişti mi diye kontrol
+    if (prevTagRef.current !== selectedTag) {
+      // Eğer tag değiştiyse, yeni bir yükleme yapmak için flag'i resetle
+      hasLoadedRef.current = false;
+      prevTagRef.current = selectedTag;
+    }
+
+    // İlk yükleme veya tag değiştiğinde yükleme yap
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      loadPosts();
+    }
+  }, [selectedTag, loadPosts]); // loadPosts artık dependency olabilir çünkü useCallback ile memoize edildi
 
   // Daha fazla yazı yükleme
   const handleLoadMore = () => {
@@ -102,7 +127,7 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({ selectedTag = '' }) 
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover"
-                        priority={index < 3} // İlk 3 resme priority özelliği ekledik
+                        priority={index < 3} // İlk 3 resme priority ekledik
                       />
                     </div>
                   )}
