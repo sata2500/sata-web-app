@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Image from 'next/image'; // Bu satırı ekledim
+import Image from 'next/image';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { Container } from '@/components/ui/container';
@@ -12,12 +12,15 @@ import { createMetadata } from '@/app/metadata';
 
 // Dinamik meta veri oluşturma
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const post = await getBlogPostBySlug(params.slug);
+  // params'ı await et - Next.js 15'te zorunlu
+  const paramsData = await params;
+  
+  const post = await getBlogPostBySlug(paramsData.slug);
   if (!post) {
     return createMetadata({
       title: 'Yazı Bulunamadı',
       description: 'Aradığınız blog yazısı bulunamadı.',
-      path: `/blog/${params.slug}`,
+      path: `/blog/${paramsData.slug}`,
       noIndex: true
     });
   }
@@ -26,12 +29,15 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     title: post.title,
     description: post.excerpt,
     path: `/blog/${post.slug}`,
-    ogImage: post.coverImage || undefined, // null yerine undefined kullanın
+    ogImage: post.coverImage || undefined,
   });
 }
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = await getBlogPostBySlug(params.slug);
+  // params'ı await et - Next.js 15'te zorunlu
+  const paramsData = await params;
+  
+  const post = await getBlogPostBySlug(paramsData.slug);
   if (!post || post.status !== 'published') {
     notFound();
   }
@@ -94,7 +100,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                 width={1200}
                 height={630}
                 className="rounded-lg"
-                priority // LCP (Largest Contentful Paint) için önemli
+                priority
               />
             </figure>
           )}

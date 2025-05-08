@@ -8,14 +8,17 @@ import { getBlogPostById } from '@/lib/blog-service';
 import { auth } from '@/lib/server-auth';
 
 export default async function EditBlogPostPage({ params }: { params: { id: string } }) {
+  // params'ı await et - Next.js 15'te zorunlu
+  const paramsData = await params;
+  
   // Sunucu tarafında yetkilendirme kontrolü
   const session = await auth();
   
   if (!session?.user?.isAdmin && !session?.user?.isEditor) {
-    redirect('/giris?redirect=/admin/blog/' + params.id + '/edit');
+    redirect('/giris?redirect=/admin/blog/' + paramsData.id + '/edit');
   }
 
-  const post = await getBlogPostById(params.id);
+  const post = await getBlogPostById(paramsData.id);
   
   if (!post) {
     redirect('/admin/blog');
