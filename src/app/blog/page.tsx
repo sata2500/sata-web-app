@@ -18,7 +18,7 @@ export const metadata: Metadata = createMetadata({
 export default async function BlogPage({ 
   searchParams 
 }: { 
-  searchParams: { tag?: string } 
+  searchParams: Promise<{ tag?: string }> 
 }) {
   // searchParams'ı await et - Next.js 15'te zorunlu
   const params = await searchParams;

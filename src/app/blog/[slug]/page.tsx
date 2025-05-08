@@ -11,7 +11,11 @@ import { getBlogPostBySlug } from '@/lib/blog-service';
 import { createMetadata } from '@/app/metadata';
 
 // Dinamik meta veri oluşturma
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata({ 
+  params 
+}: { 
+  params: Promise<{ slug: string }> 
+}): Promise<Metadata> {
   // params'ı await et - Next.js 15'te zorunlu
   const paramsData = await params;
   
@@ -33,7 +37,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   });
 }
 
-export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+export default async function BlogPostPage({ 
+  params 
+}: { 
+  params: Promise<{ slug: string }> 
+}) {
   // params'ı await et - Next.js 15'te zorunlu
   const paramsData = await params;
   

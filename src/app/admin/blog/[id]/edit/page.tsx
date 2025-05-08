@@ -7,7 +7,11 @@ import { Container } from '@/components/ui/container';
 import { getBlogPostById } from '@/lib/blog-service';
 import { auth } from '@/lib/server-auth';
 
-export default async function EditBlogPostPage({ params }: { params: { id: string } }) {
+export default async function EditBlogPostPage({ 
+  params 
+}: { 
+  params: Promise<{ id: string }> 
+}) {
   // params'ı await et - Next.js 15'te zorunlu
   const paramsData = await params;
   
