@@ -1,138 +1,91 @@
-export default function Home() {
+import { Metadata } from 'next';
+import Link from 'next/link';
+import { Container } from '@/components/ui/container';
+import { Button } from '@/components/ui/button';
+import { HeroSlider } from '@/components/home/hero-slider';
+import { FeaturedPosts } from '@/components/home/featured-posts';
+import { AboutSection } from '@/components/home/about-section';
+import { SchemaMarkup } from '@/components/seo/schema-markup';
+import { createMetadata } from '@/app/metadata';
+
+export const metadata: Metadata = createMetadata({
+  title: 'Modern Blog ve Öğrenme Platformu',
+  description: 'SaTA, blog ve çeşitli uygulamalar sunan modern bir web platformudur.'
+});
+
+export default function HomePage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-8rem)]">
-      <section className="w-full py-12 md:py-24 lg:py-32">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">
-                SaTA Web Platformu
-              </h1>
-              <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-                Blog ve çeşitli uygulamalar sunan modern bir web platformu
-              </p>
+    <>
+      <SchemaMarkup type="website" />
+      
+      {/* Hero Slider */}
+      <HeroSlider />
+      
+      {/* Öne Çıkan Blog Yazıları */}
+      <Container>
+        <div className="py-12">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-bold">Öne Çıkan Yazılar</h2>
+            <Link href="/blog" className="text-primary font-medium">
+              Tüm Yazılar &rarr;
+            </Link>
+          </div>
+          
+          <FeaturedPosts />
+        </div>
+      </Container>
+      
+      {/* Hakkımızda Bölümü */}
+      <div className="bg-primary/5 py-16">
+        <Container>
+          <AboutSection />
+          
+          <div className="mt-8 text-center">
+            <Button href="/hakkimizda">
+              Daha Fazla Bilgi
+            </Button>
+          </div>
+        </Container>
+      </div>
+      
+      {/* Yakında Gelecek Modüller */}
+      <Container>
+        <div className="py-16">
+          <h2 className="text-3xl font-bold text-center mb-12">Yakında Gelecek Modüller</h2>
+          
+          <div className="grid gap-8 md:grid-cols-3">
+            <div className="bg-card border border-border rounded-lg p-6 text-center">
+              <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold mb-2">SaTA-ÖYS</h3>
+              <p className="text-foreground/70">Öğrenme yönetim sistemi ile eğitim içeriklerinizi kolayca oluşturun ve paylaşın.</p>
             </div>
-            <div className="flex flex-col gap-2 min-[400px]:flex-row">
-              <a className="btn btn-primary" href="/blog">
-                Blog'a Göz At
-              </a>
-              <a className="btn btn-outline" href="/hakkimizda">
-                Hakkımızda
-              </a>
+            
+            <div className="bg-card border border-border rounded-lg p-6 text-center">
+              <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold mb-2">SaTA-Müzik</h3>
+              <p className="text-foreground/70">Müzik çalma listelerinizi oluşturun, paylaşın ve keşfedin.</p>
+            </div>
+            
+            <div className="bg-card border border-border rounded-lg p-6 text-center">
+              <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold mb-2">Seher AI</h3>
+              <p className="text-foreground/70">Yapay zeka destekli içerik oluşturma ve analiz araçları.</p>
             </div>
           </div>
         </div>
-      </section>
-
-      <section className="w-full py-12 md:py-24 lg:py-32 bg-card">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center">
-            <div className="space-y-2">
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">
-                Özellikler
-              </h2>
-              <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-                SaTA platformu neler sunuyor?
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
-              <div className="flex flex-col items-center space-y-2 p-4 rounded-lg border">
-                <div className="p-2 rounded-full bg-primary-400/10">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-6 w-6 text-primary"
-                  >
-                    <path d="M18 7V5a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2"></path>
-                    <path d="M5 14h14"></path>
-                    <path d="M7 7v12"></path>
-                    <path d="M17 7v12"></path>
-                    <path d="M8 7h8"></path>
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold">SaTA Blog</h3>
-                <p className="text-gray-500 dark:text-gray-400">
-                  Modern ve kullanıcı dostu blog platformu
-                </p>
-              </div>
-              <div className="flex flex-col items-center space-y-2 p-4 rounded-lg border">
-                <div className="p-2 rounded-full bg-secondary-400/10">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-6 w-6 text-secondary"
-                  >
-                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
-                    <line x1="4" x2="4" y1="22" y2="15"></line>
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold">SaTA ÖYS</h3>
-                <p className="text-gray-500 dark:text-gray-400">
-                  Öğrenme yönetim sistemi (Yakında)
-                </p>
-              </div>
-              <div className="flex flex-col items-center space-y-2 p-4 rounded-lg border">
-                <div className="p-2 rounded-full bg-primary-400/10">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-6 w-6 text-primary"
-                  >
-                    <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
-                    <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5z"></path>
-                    <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5z"></path>
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold">SaTA Müzik</h3>
-                <p className="text-gray-500 dark:text-gray-400">
-                  Müzik servisi (Yakında)
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="w-full py-12 md:py-24 lg:py-32">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center">
-            <div className="space-y-2">
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">
-                Bir Parçası Olun
-              </h2>
-              <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-                SaTA platformuna katılmak için hemen kayıt olun.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2 min-[400px]:flex-row">
-              <a className="btn btn-primary" href="/kaydol">
-                Hemen Kaydol
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
-  )
+      </Container>
+    </>
+  );
 }

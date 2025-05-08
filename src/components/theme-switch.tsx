@@ -1,49 +1,22 @@
+// src/components/theme-switch.tsx
 'use client';
 
+import { useTheme } from '@/context/theme-context';
 import { useEffect, useState } from 'react';
 
 export function ThemeSwitch() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const { theme, setTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
 
   // İlk komponent montajında çalışır
   useEffect(() => {
     // Hydration işlemi tamamlandı
     setIsMounted(true);
-    
-    // LocalStorage'dan tema tercihi alınıyor
-    try {
-      const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-      // Kaydedilmiş tema varsa onu kullan
-      if (savedTheme) {
-        setTheme(savedTheme);
-      } 
-      // Yoksa sistem tercihine bak
-      else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        setTheme('dark');
-      }
-    } catch (error) {
-      console.error('Tema okunamadı:', error);
-    }
   }, []);
-
-  // Tema değiştiğinde HTML belgesinin sınıfını günceller
-  useEffect(() => {
-    if (!isMounted) return;
-    
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(theme);
-    
-    try {
-      localStorage.setItem('theme', theme);
-    } catch (error) {
-      console.error('Tema kaydedilemedi:', error);
-    }
-  }, [theme, isMounted]);
 
   // Tema değiştirme fonksiyonu
   function toggleTheme() {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+    setTheme(theme === 'light' ? 'dark' : 'light');
   }
 
   // Hydration sorunlarını önlemek için, ilk render sırasında basit bir buton göster

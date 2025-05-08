@@ -1,314 +1,84 @@
-'use client';
+import { Metadata } from 'next';
+import { Container } from '@/components/ui/container';
+import { ContactForm } from '@/components/contact/contact-form';
+import { SchemaMarkup } from '@/components/seo/schema-markup';
+import { createMetadata } from '@/app/metadata';
 
-import { useState } from 'react';
+export const metadata: Metadata = createMetadata({
+  title: 'İletişim',
+  description: 'SaTA ekibi ile iletişime geçin, sorularınızı sorun veya önerilerinizi paylaşın.',
+  path: '/iletisim'
+});
 
 export default function ContactPage() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
-  });
-  
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setSuccess(false);
-    
-    try {
-      // Gerçek projede Firebase'e veri kaydetme işlemi yapılabilir
-      // Şimdilik sadece simüle ediyoruz
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      console.log('Form verileri:', formData);
-      
-      // Formu temizle
-      setFormData({
-        name: '',
-        email: '',
-        subject: '',
-        message: ''
-      });
-      
-      setSuccess(true);
-    } catch (err) {
-      console.error('Form gönderilirken hata oluştu:', err);
-      setError('Form gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
   return (
-    <div className="container py-8 md:py-12">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">İletişim</h1>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          <div>
-            <div className="prose prose-lg max-w-none dark:prose-invert">
-              <p>
-                SaTA ekibi olarak sorularınızı ve geri bildirimlerinizi almaktan
-                memnuniyet duyarız. Aşağıdaki formu doldurarak veya e-posta adresimiz
-                üzerinden bizimle iletişime geçebilirsiniz.
+    <>
+      <SchemaMarkup type="website" />
+      
+      <Container>
+        <div className="py-12">
+          <h1 className="text-4xl font-bold mb-8 text-center">İletişim</h1>
+          
+          <div className="grid gap-12 lg:grid-cols-2">
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Bizimle İletişime Geçin</h2>
+              <p className="text-lg mb-6">
+                Sorularınız, önerileriniz veya işbirliği teklifleriniz için aşağıdaki iletişim formunu 
+                kullanabilir veya doğrudan e-posta adresimizden bize ulaşabilirsiniz.
               </p>
               
-              <h2>İletişim Bilgileri</h2>
-              
-              <ul className="!list-none p-0">
-                <li className="flex items-start mb-4">
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    width="24" 
-                    height="24" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    className="mr-3 text-primary flex-shrink-0 mt-1"
-                  >
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                  </svg>
-                  <div>
-                    <strong className="block">Telefon</strong>
-                    <span>+90 (212) 555 1234</span>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="bg-primary/10 text-primary p-3 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                    </svg>
                   </div>
-                </li>
-                
-                <li className="flex items-start mb-4">
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    width="24" 
-                    height="24" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    className="mr-3 text-primary flex-shrink-0 mt-1"
-                  >
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                    <polyline points="22,6 12,13 2,6"></polyline>
-                  </svg>
                   <div>
-                    <strong className="block">E-posta</strong>
+                    <h3 className="font-medium">E-posta</h3>
                     <a href="mailto:info@sata.com.tr" className="text-primary hover:underline">
                       info@sata.com.tr
                     </a>
                   </div>
-                </li>
+                </div>
                 
-                <li className="flex items-start">
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    width="24" 
-                    height="24" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    className="mr-3 text-primary flex-shrink-0 mt-1"
-                  >
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                    <circle cx="12" cy="10" r="3"></circle>
-                  </svg>
-                  <div>
-                    <strong className="block">Adres</strong>
-                    <span>
-                      Atatürk Caddesi No: 123<br />
-                      Antalya, Türkiye
-                    </span>
+                <div className="flex items-start gap-3">
+                  <div className="bg-primary/10 text-primary p-3 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                    </svg>
                   </div>
-                </li>
-              </ul>
-              
-              <h2>Bizi Takip Edin</h2>
-              
-              <div className="flex space-x-4">
-                <a 
-                  href="https://github.com/sataweb" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-gray-500 dark:text-gray-400 hover:text-primary"
-                  aria-label="GitHub"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path>
-                    <path d="M9 18c-4.51 2-5-2-7-2"></path>
-                  </svg>
-                </a>
+                  <div>
+                    <h3 className="font-medium">Web</h3>
+                    <a href="https://sata.com.tr" className="text-primary hover:underline">
+                      https://sata.com.tr
+                    </a>
+                  </div>
+                </div>
                 
-                <a 
-                  href="https://twitter.com/sataweb" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-gray-500 dark:text-gray-400 hover:text-primary"
-                  aria-label="Twitter"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
-                  </svg>
-                </a>
-                
-                <a 
-                  href="https://www.linkedin.com/company/sataweb" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-gray-500 dark:text-gray-400 hover:text-primary"
-                  aria-label="LinkedIn"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-                    <rect width="4" height="12" x="2" y="9"></rect>
-                    <circle cx="4" cy="4" r="2"></circle>
-                  </svg>
-                </a>
+                <div className="flex items-start gap-3">
+                  <div className="bg-primary/10 text-primary p-3 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-medium">GitHub</h3>
+                    <a href="https://github.com/sata-project" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                      github.com/sata-project
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div>
-            <div className="card p-6">
-              <h2 className="text-xl font-bold mb-4">İletişim Formu</h2>
-              
-              {success && (
-                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
-                  <span className="block sm:inline">Mesajınız başarıyla gönderildi. En kısa sürede size dönüş yapacağız.</span>
-                </div>
-              )}
-              
-              {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-                  <span className="block sm:inline">{error}</span>
-                </div>
-              )}
-              
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium mb-1">
-                    İsim Soyisim <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium mb-1">
-                    E-posta <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="subject" className="block text-sm font-medium mb-1">
-                    Konu <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="subject"
-                    name="subject"
-                    required
-                    value={formData.subject}
-                    onChange={handleChange}
-                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="">Seçiniz</option>
-                    <option value="Genel Sorular">Genel Sorular</option>
-                    <option value="Teknik Destek">Teknik Destek</option>
-                    <option value="İş Birliği">İş Birliği</option>
-                    <option value="Geri Bildirim">Geri Bildirim</option>
-                    <option value="Diğer">Diğer</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label htmlFor="message" className="block text-sm font-medium mb-1">
-                    Mesaj <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    rows={5}
-                    required
-                    value={formData.message}
-                    onChange={handleChange}
-                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-primary"
-                  ></textarea>
-                </div>
-                
-                <div>
-                  <button
-                    type="submit"
-                    className="btn btn-primary w-full"
-                    disabled={loading}
-                  >
-                    {loading ? 'Gönderiliyor...' : 'Gönder'}
-                  </button>
-                </div>
-              </form>
+            
+            <div className="bg-card border border-border rounded-lg p-6">
+              <h2 className="text-2xl font-bold mb-6">İletişim Formu</h2>
+              <ContactForm />
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </Container>
+    </>
   );
 }

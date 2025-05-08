@@ -1,90 +1,162 @@
+// src/context/auth-context.tsx
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  User, 
-  GoogleAuthProvider,
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  UserCredential
-} from 'firebase/auth';
+import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/config/firebase';
+import { UserAuth, UserProfile } from '@/types/user';
+import { 
+  getUserProfile, 
+  loginWithEmailAndPassword, 
+  loginWithGoogle, 
+  logout,
+  registerWithEmailAndPassword
+} from '@/lib/user-service';
 
-// Auth context için tip tanımları
-type AuthContextType = {
-  user: User | null;
+interface AuthContextType {
+  user: UserAuth | null;
+  userProfile: UserProfile | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<UserCredential>;
-  signInWithEmail: (email: string, password: string) => Promise<UserCredential>;
-  signUpWithEmail: (email: string, password: string) => Promise<UserCredential>;
-  logout: () => Promise<void>;
-};
+  error: string | null;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  signOut: () => Promise<void>;
+  signUpWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
+}
 
-// Context'i oluştur
-const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType>({
+  user: null,
+  userProfile: null,
+  loading: true,
+  error: null,
+  signInWithEmail: async () => {},
+  signInWithGoogle: async () => {},
+  signOut: async () => {},
+  signUpWithEmail: async () => {}
+});
 
-// Context provider bileşeni
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<UserAuth | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Google ile giriş yapma fonksiyonu
-  const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    return signInWithPopup(auth, provider);
-  };
-
-  // Email ve şifre ile giriş yapma fonksiyonu
-  const signInWithEmail = (email: string, password: string) => {
-    return signInWithEmailAndPassword(auth, email, password);
-  };
-
-  // Email ve şifre ile kayıt olma fonksiyonu
-  const signUpWithEmail = (email: string, password: string) => {
-    return createUserWithEmailAndPassword(auth, email, password);
-  };
-
-  // Çıkış yapma fonksiyonu
-  const logout = () => {
-    return signOut(auth);
-  };
-
-  // Auth durumunu dinle
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
+      
+      try {
+        if (firebaseUser) {
+          // Firestore'dan kullanıcı profilini al
+          const profile = await getUserProfile(firebaseUser.uid);
+          
+          setUserProfile(profile);
+          
+          // Auth context için kullanıcı bilgilerini oluştur
+          setUser({
+            id: firebaseUser.uid,
+            email: firebaseUser.email || '',
+            displayName: firebaseUser.displayName || profile?.displayName || 'Kullanıcı',
+            photoURL: firebaseUser.photoURL || null,
+            isAdmin: profile?.role === 'admin',
+            isEditor: profile?.role === 'editor' || profile?.role === 'admin'
+          });
+        } else {
+          setUser(null);
+          setUserProfile(null);
+        }
+      } catch (err) {
+        console.error('Kullanıcı profili alınırken hata oluştu:', err);
+        setError('Kullanıcı bilgileri yüklenirken bir hata oluştu.');
+      } finally {
+        setLoading(false);
+      }
     });
 
-    // Temizleme fonksiyonu
     return () => unsubscribe();
   }, []);
 
-  // Context değerleri
-  const value = {
-    user,
-    loading,
-    signInWithGoogle,
-    signInWithEmail,
-    signUpWithEmail,
-    logout,
+  // E-posta ve şifre ile giriş
+  const signInWithEmail = async (email: string, password: string): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await loginWithEmailAndPassword(email, password);
+    } catch (err: any) {
+      console.error('Giriş yaparken hata oluştu:', err);
+      setError(err.message || 'Giriş yapılırken bir hata oluştu.');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Google ile giriş
+  const signInWithGoogle = async (): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await loginWithGoogle();
+    } catch (err: any) {
+      console.error('Google ile giriş yaparken hata oluştu:', err);
+      setError(err.message || 'Google ile giriş yapılırken bir hata oluştu.');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Çıkış yap
+  const signOut = async (): Promise<void> => {
+    setLoading(true);
+    
+    try {
+      await logout();
+    } catch (err: any) {
+      console.error('Çıkış yaparken hata oluştu:', err);
+      setError(err.message || 'Çıkış yapılırken bir hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // E-posta ve şifre ile kayıt
+  const signUpWithEmail = async (email: string, password: string, displayName: string): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await registerWithEmailAndPassword(email, password, displayName);
+    } catch (err: any) {
+      console.error('Kayıt olurken hata oluştu:', err);
+      setError(err.message || 'Kayıt olurken bir hata oluştu.');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
+    <AuthContext.Provider 
+      value={{ 
+        user, 
+        userProfile, 
+        loading, 
+        error, 
+        signInWithEmail, 
+        signInWithGoogle, 
+        signOut,
+        signUpWithEmail
+      }}
+    >
+      {children}
     </AuthContext.Provider>
   );
-}
+};
 
-// Auth hook'u
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === null) {
-    throw new Error('useAuth hook must be used within an AuthProvider');
-  }
-  return context;
-}
+// Auth Hook
+export const useAuth = () => {
+  return React.useContext(AuthContext);
+};
