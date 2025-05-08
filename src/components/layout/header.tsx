@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image'; // Bu satırı ekledim
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
 import { ThemeSwitch } from '@/components/theme-switch';
@@ -65,10 +66,12 @@ export const Header = () => {
                 <div className="relative">
                   <Link href="/profil" className="flex items-center space-x-1">
                     {user.photoURL ? (
-                      <img
+                      <Image
                         src={user.photoURL}
                         alt={user.displayName}
-                        className="h-8 w-8 rounded-full"
+                        width={32}
+                        height={32}
+                        className="rounded-full"
                       />
                     ) : (
                       <div className="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center text-primary">

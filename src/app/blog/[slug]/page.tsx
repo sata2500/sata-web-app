@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import Image from 'next/image'; // Bu satırı ekledim
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { Container } from '@/components/ui/container';
@@ -12,7 +13,6 @@ import { createMetadata } from '@/app/metadata';
 // Dinamik meta veri oluşturma
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const post = await getBlogPostBySlug(params.slug);
-  
   if (!post) {
     return createMetadata({
       title: 'Yazı Bulunamadı',
@@ -32,7 +32,6 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
   const post = await getBlogPostBySlug(params.slug);
-  
   if (!post || post.status !== 'published') {
     notFound();
   }
@@ -44,7 +43,6 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
   return (
     <>
       <SchemaMarkup type="blogPost" data={post} />
-      
       <Container>
         <article className="max-w-3xl mx-auto py-12">
           {/* Başlık ve meta bilgiler */}
@@ -56,23 +54,22 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                 </Badge>
               ))}
             </div>
-            
             <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
-            
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 {post.author.avatar ? (
-                  <img 
-                    src={post.author.avatar} 
-                    alt={post.author.name} 
-                    className="w-10 h-10 rounded-full"
+                  <Image
+                    src={post.author.avatar}
+                    alt={post.author.name}
+                    width={40}
+                    height={40}
+                    className="rounded-full"
                   />
                 ) : (
                   <div className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center">
                     {post.author.name[0].toUpperCase()}
                   </div>
                 )}
-                
                 <div>
                   <div className="font-medium">{post.author.name}</div>
                   <div className="text-sm text-foreground/60">
@@ -90,17 +87,20 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
           
           {/* Kapak resmi */}
           {post.coverImage && (
-            <figure className="mb-8">
-              <img 
-                src={post.coverImage} 
-                alt={post.title} 
-                className="w-full h-auto rounded-lg"
+            <figure className="mb-8 relative">
+              <Image
+                src={post.coverImage}
+                alt={post.title}
+                width={1200}
+                height={630}
+                className="rounded-lg"
+                priority // LCP (Largest Contentful Paint) için önemli
               />
             </figure>
           )}
           
           {/* İçerik */}
-          <div 
+          <div
             className="prose prose-lg max-w-none dark:prose-invert"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />

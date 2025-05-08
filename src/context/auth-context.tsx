@@ -83,9 +83,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     try {
       await loginWithEmailAndPassword(email, password);
-    } catch (err: any) {
+    } catch (err: unknown) { // any yerine unknown
       console.error('Giriş yaparken hata oluştu:', err);
-      setError(err.message || 'Giriş yapılırken bir hata oluştu.');
+      
+      if (err instanceof Error) {
+        setError(err.message || 'Giriş yapılırken bir hata oluştu.');
+      } else {
+        setError('Giriş yapılırken bir hata oluştu.');
+      }
       throw err;
     } finally {
       setLoading(false);
@@ -99,9 +104,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     try {
       await loginWithGoogle();
-    } catch (err: any) {
+    } catch (err: unknown) { // any yerine unknown
       console.error('Google ile giriş yaparken hata oluştu:', err);
-      setError(err.message || 'Google ile giriş yapılırken bir hata oluştu.');
+      
+      if (err instanceof Error) {
+        setError(err.message || 'Google ile giriş yapılırken bir hata oluştu.');
+      } else {
+        setError('Google ile giriş yapılırken bir hata oluştu.');
+      }
       throw err;
     } finally {
       setLoading(false);
@@ -114,9 +124,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     try {
       await logout();
-    } catch (err: any) {
+    } catch (err: unknown) { // any yerine unknown
       console.error('Çıkış yaparken hata oluştu:', err);
-      setError(err.message || 'Çıkış yapılırken bir hata oluştu.');
+      
+      if (err instanceof Error) {
+        setError(err.message || 'Çıkış yapılırken bir hata oluştu.');
+      } else {
+        setError('Çıkış yapılırken bir hata oluştu.');
+      }
     } finally {
       setLoading(false);
     }
@@ -129,9 +144,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     try {
       await registerWithEmailAndPassword(email, password, displayName);
-    } catch (err: any) {
+    } catch (err: unknown) { // any yerine unknown
       console.error('Kayıt olurken hata oluştu:', err);
-      setError(err.message || 'Kayıt olurken bir hata oluştu.');
+      
+      if (err instanceof Error) {
+        setError(err.message || 'Kayıt olurken bir hata oluştu.');
+      } else {
+        setError('Kayıt olurken bir hata oluştu.');
+      }
       throw err;
     } finally {
       setLoading(false);

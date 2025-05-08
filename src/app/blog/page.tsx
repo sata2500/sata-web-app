@@ -20,7 +20,9 @@ export default async function BlogPage({
 }: { 
   searchParams: { tag?: string } 
 }) {
-  const selectedTag = searchParams.tag || '';
+  // searchParams'ı await et - Next.js 15'te zorunlu
+  const params = await searchParams;
+  const selectedTag = params.tag || '';
   const tags = await getBlogTags();
   
   return (

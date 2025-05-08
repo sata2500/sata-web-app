@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // useCallback ekledim
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
@@ -14,13 +14,15 @@ import { BlogPost } from '@/types/blog';
 import { formatRelativeTime } from '@/lib/utils';
 
 export const BlogPostList: React.FC = () => {
-  const { user } = useAuth();
+  // user değişkenini kaldırdım çünkü hiç kullanılmıyor
+  const { } = useAuth();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all');
 
-  const fetchPosts = async () => {
+  // useCallback ile sararak dependency problemini çözüyoruz
+  const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
       const result = await getBlogPosts({ 
@@ -34,11 +36,12 @@ export const BlogPostList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]); // filter değişkeni bağımlılık olarak eklendi
 
+  // Şimdi fetchPosts'u dependency array'e ekleyebiliriz
   useEffect(() => {
     fetchPosts();
-  }, [filter]);
+  }, [fetchPosts]); // fetchPosts dependency array'e eklendi
 
   const handleDelete = async (id: string) => {
     if (!confirm('Bu blog yazısını silmek istediğinize emin misiniz?')) {

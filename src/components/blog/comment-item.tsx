@@ -3,12 +3,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { format } from 'date-fns';
-import { tr } from 'date-fns/locale';
+// Kullanılmayan importları kaldırdım
+// import { format } from 'date-fns';
+// import { tr } from 'date-fns/locale';
 import { CommentForm } from '@/components/blog/comment-form';
 import { BlogComment } from '@/types/blog';
 import { useAuth } from '@/context/auth-context';
 import { formatRelativeTime } from '@/lib/utils';
+import Image from 'next/image'; // Image bileşenini ekledim
 
 interface CommentItemProps {
   comment: BlogComment;
@@ -37,10 +39,12 @@ export const CommentItem: React.FC<CommentItemProps> = ({
         <div className="flex items-start gap-3">
           {/* Avatar */}
           {comment.author.avatar ? (
-            <img 
+            <Image 
               src={comment.author.avatar} 
               alt={comment.author.name} 
-              className="w-10 h-10 rounded-full"
+              width={40} 
+              height={40}
+              className="rounded-full"
             />
           ) : (
             <div className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center">
@@ -93,10 +97,12 @@ export const CommentItem: React.FC<CommentItemProps> = ({
               <div className="flex items-start gap-3">
                 {/* Avatar */}
                 {reply.author.avatar ? (
-                  <img 
+                  <Image 
                     src={reply.author.avatar} 
                     alt={reply.author.name} 
-                    className="w-8 h-8 rounded-full"
+                    width={32} 
+                    height={32}
+                    className="rounded-full"
                   />
                 ) : (
                   <div className="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm">

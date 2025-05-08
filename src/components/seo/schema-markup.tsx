@@ -1,23 +1,33 @@
 // src/components/seo/schema-markup.tsx
-
 'use client';
-
 import { usePathname } from 'next/navigation';
 import Script from 'next/script';
 import { BlogPost } from '@/types/blog';
 import { siteConfig } from '@/app/metadata';
 
+// TypeScript tip tanımlamaları
+// Schema için genel bir tip tanımı
+type JsonLdSchema = Record<string, unknown>;
+
+// Blog için veri türü
+interface BlogData {
+  description?: string;
+  // Diğer blog özellikleri buraya eklenebilir
+}
+
 interface SchemaMarkupProps {
   type: 'website' | 'blog' | 'blogPost' | 'organization';
-  data?: any;
+  // any yerine specific union type kullanıyoruz
+  data?: BlogData | BlogPost;
 }
 
 export const SchemaMarkup: React.FC<SchemaMarkupProps> = ({ type, data }) => {
   const pathname = usePathname();
   const url = `${siteConfig.url}${pathname}`;
-
-  let schema: any = null;
-
+  
+  // any yerine JsonLdSchema tipi kullanıyoruz
+  let schema: JsonLdSchema | null = null;
+  
   switch (type) {
     case 'website':
       schema = {
@@ -28,17 +38,17 @@ export const SchemaMarkup: React.FC<SchemaMarkupProps> = ({ type, data }) => {
         description: siteConfig.description,
       };
       break;
-
+    
     case 'blog':
       schema = {
         '@context': 'https://schema.org',
         '@type': 'Blog',
         url,
         name: `${siteConfig.name} Blog`,
-        description: data?.description || 'Blog yazıları ve makaleler',
+        description: (data as BlogData)?.description || 'Blog yazıları ve makaleler',
       };
       break;
-
+    
     case 'blogPost':
       const post = data as BlogPost;
       schema = {
@@ -68,7 +78,7 @@ export const SchemaMarkup: React.FC<SchemaMarkupProps> = ({ type, data }) => {
         keywords: post.tags.join(', '),
       };
       break;
-
+    
     case 'organization':
       schema = {
         '@context': 'https://schema.org',
@@ -84,9 +94,9 @@ export const SchemaMarkup: React.FC<SchemaMarkupProps> = ({ type, data }) => {
       };
       break;
   }
-
+  
   if (!schema) return null;
-
+  
   return (
     <Script
       id={`schema-${type}`}

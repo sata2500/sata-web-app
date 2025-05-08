@@ -1,7 +1,7 @@
 // src/components/admin/admin-layout.tsx
-
 'use client';
-
+import Link from 'next/link';
+import Image from 'next/image'; // Eklenen import
 import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Sidebar } from '@/components/admin/sidebar';
@@ -11,28 +11,26 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
   const { user, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
-
+  
   // Sidebar'ı geniş ekranlarda varsayılan olarak açık tut
   useEffect(() => {
     const handleResize = () => {
       setSidebarOpen(window.innerWidth >= 1024);
     };
-
     // İlk yükleme
     handleResize();
-
     // Pencere boyutu değiştiğinde
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
+  
   // Sayfa değiştiğinde mobil görünümde sidebar'ı kapat
   useEffect(() => {
     if (window.innerWidth < 1024) {
       setSidebarOpen(false);
     }
   }, [pathname]);
-
+  
   // Yükleme durumunda veya yetkisiz erişimde gösterilen içerik
   if (loading) {
     return (
@@ -41,26 +39,26 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
       </div>
     );
   }
-
+  
   if (!user?.isAdmin && !user?.isEditor) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Erişim Reddedildi</h1>
           <p className="mb-6">Bu sayfayı görüntülemek için gerekli izinlere sahip değilsiniz.</p>
-          <a href="/" className="text-primary font-medium">
+          <Link href="/" className="text-primary font-medium">
             Ana Sayfaya Dön &rarr;
-          </a>
+          </Link>
         </div>
       </div>
     );
   }
-
+  
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
+      
       {/* Ana içerik */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Üst çubuk */}
@@ -85,10 +83,12 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                 {user?.displayName || user?.email}
               </span>
               {user?.photoURL ? (
-                <img
+                <Image
                   src={user.photoURL}
                   alt={user.displayName || 'Kullanıcı'}
-                  className="h-8 w-8 rounded-full"
+                  width={32}
+                  height={32}
+                  className="rounded-full"
                 />
               ) : (
                 <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
@@ -98,7 +98,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             </div>
           </div>
         </header>
-
+        
         {/* İçerik */}
         <main className="flex-1 overflow-y-auto py-6">
           {children}

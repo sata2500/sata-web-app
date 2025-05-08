@@ -1,3 +1,6 @@
+// src/components/layout/footer.tsx
+import Link from 'next/link'; // Link bileşenini import ediyoruz
+
 export function Footer() {
     return (
       <footer className="border-t py-8 bg-gray-50 dark:bg-gray-900">
@@ -14,9 +17,10 @@ export function Footer() {
               <h4 className="font-bold">Platformlar</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="/blog" className="text-gray-500 dark:text-gray-400 hover:text-primary">
+                  {/* <a> etiketi yerine <Link> kullanıyoruz */}
+                  <Link href="/blog" className="text-gray-500 dark:text-gray-400 hover:text-primary">
                     SaTA Blog
-                  </a>
+                  </Link>
                 </li>
                 <li>
                   <span className="text-gray-400 dark:text-gray-500 flex items-center">
@@ -41,24 +45,24 @@ export function Footer() {
               <h4 className="font-bold">Bağlantılar</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="/hakkimizda" className="text-gray-500 dark:text-gray-400 hover:text-primary">
+                  <Link href="/hakkimizda" className="text-gray-500 dark:text-gray-400 hover:text-primary">
                     Hakkımızda
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/iletisim" className="text-gray-500 dark:text-gray-400 hover:text-primary">
+                  <Link href="/iletisim" className="text-gray-500 dark:text-gray-400 hover:text-primary">
                     İletişim
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/kullanim-kosullari" className="text-gray-500 dark:text-gray-400 hover:text-primary">
+                  <Link href="/kullanim-kosullari" className="text-gray-500 dark:text-gray-400 hover:text-primary">
                     Kullanım Koşulları
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/gizlilik-politikasi" className="text-gray-500 dark:text-gray-400 hover:text-primary">
+                  <Link href="/gizlilik-politikasi" className="text-gray-500 dark:text-gray-400 hover:text-primary">
                     Gizlilik Politikası
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -153,6 +157,7 @@ export function Footer() {
               &copy; {new Date().getFullYear()} SaTA. Tüm hakları saklıdır.
             </p>
             <div className="mt-4 md:mt-0">
+              {/* Sayfa içi link olduğu için burada <a> kullanılabilir */}
               <a href="#" className="text-sm text-gray-500 dark:text-gray-400 hover:text-primary">
                 Yukarı çık
               </a>

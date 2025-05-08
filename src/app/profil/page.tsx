@@ -1,6 +1,7 @@
 // src/app/profil/page.tsx
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
@@ -51,9 +52,14 @@ export default function ProfilPage() {
       });
       
       setIsEditing(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Profil güncellenirken hata oluştu:', err);
-      setUpdateError(err.message || 'Profil güncellenirken bir hata oluştu.');
+      
+      if (err instanceof Error) {
+        setUpdateError(err.message || 'Profil güncellenirken bir hata oluştu.');
+      } else {
+        setUpdateError('Profil güncellenirken bir hata oluştu.');
+      }
     } finally {
       setUpdateLoading(false);
     }
@@ -85,10 +91,12 @@ export default function ProfilPage() {
               <>
                 <div className="flex items-center gap-4">
                   {user?.photoURL ? (
-                    <img 
+                    <Image 
                       src={user.photoURL} 
-                      alt={user.displayName} 
-                      className="w-16 h-16 rounded-full"
+                      alt={user.displayName || 'Profil resmi'} 
+                      width={64}  
+                      height={64} 
+                      className="rounded-full"
                     />
                   ) : (
                     <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center text-2xl">

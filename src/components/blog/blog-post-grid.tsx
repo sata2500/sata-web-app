@@ -2,8 +2,9 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // useCallback ekledim
 import Link from 'next/link';
+import Image from 'next/image'; // Image bileşenini ekledim
 import { BlogPost } from '@/types/blog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,8 +24,8 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({ selectedTag = '' }) 
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<BlogPost> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Blog yazılarını yükleme
-  const loadPosts = async (loadMore = false) => {
+  // Blog yazılarını yükleme - useCallback ile sarıyoruz
+  const loadPosts = useCallback(async (loadMore = false) => {
     setLoading(true);
     setError(null);
 
@@ -49,12 +50,12 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({ selectedTag = '' }) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedTag, lastDoc]); // Bağımlılıkları ekledik
 
   // İlk yükleme ve tag değiştiğinde yeniden yükle
   useEffect(() => {
     loadPosts();
-  }, [selectedTag]);
+  }, [loadPosts]); // dependency array'e loadPosts ekledik
 
   // Daha fazla yazı yükleme
   const handleLoadMore = () => {
@@ -90,15 +91,18 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({ selectedTag = '' }) 
       ) : (
         <>
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post) => (
+            {posts.map((post, index) => (
               <Link key={post.id} href={`/blog/${post.slug}`} className="transition-transform hover:-translate-y-1">
                 <Card className="h-full flex flex-col">
                   {post.coverImage && (
-                    <div className="aspect-video w-full overflow-hidden rounded-t-lg">
-                      <img 
+                    <div className="aspect-video w-full overflow-hidden rounded-t-lg relative">
+                      <Image 
                         src={post.coverImage} 
                         alt={post.title} 
-                        className="w-full h-full object-cover"
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover"
+                        priority={index < 3} // İlk 3 resme priority özelliği ekledik
                       />
                     </div>
                   )}

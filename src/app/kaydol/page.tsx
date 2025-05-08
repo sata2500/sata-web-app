@@ -41,9 +41,14 @@ export default function KaydolPage() {
     try {
       await signUpWithEmail(email, password, displayName);
       router.push('/');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Kayıt hatası:', err);
-      setFormError(err.message || 'Kayıt olurken bir hata oluştu. Lütfen tekrar deneyin.');
+      
+      if (err instanceof Error) {
+        setFormError(err.message || 'Kayıt olurken bir hata oluştu. Lütfen tekrar deneyin.');
+      } else {
+        setFormError('Kayıt olurken bir hata oluştu. Lütfen tekrar deneyin.');
+      }
     }
   };
   

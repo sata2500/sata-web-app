@@ -27,8 +27,12 @@ export function LoginForm() {
     try {
       await signInWithEmail(email, password);
       router.push('/');
-    } catch (err: any) {
-      setError(err.message || 'Giriş yapılırken bir hata oluştu');
+    } catch (err: unknown) { // 'any' tipini 'unknown' ile değiştirdik
+      if (err instanceof Error) {
+        setError(err.message || 'Giriş yapılırken bir hata oluştu');
+      } else {
+        setError('Giriş yapılırken bir hata oluştu');
+      }
     } finally {
       setLoading(false);
     }
@@ -41,8 +45,12 @@ export function LoginForm() {
     try {
       await signInWithGoogle();
       router.push('/');
-    } catch (err: any) {
-      setError(err.message || 'Google ile giriş yapılırken bir hata oluştu');
+    } catch (err: unknown) { // 'any' tipini 'unknown' ile değiştirdik
+      if (err instanceof Error) {
+        setError(err.message || 'Google ile giriş yapılırken bir hata oluştu');
+      } else {
+        setError('Google ile giriş yapılırken bir hata oluştu');
+      }
     } finally {
       setLoading(false);
     }
@@ -61,8 +69,12 @@ export function LoginForm() {
       // Bu kısımda Firebase şifre sıfırlama fonksiyonunu çağırabilirsiniz
       // await sendPasswordResetEmail(auth, email);
       setSuccessMessage('Şifre sıfırlama linki e-posta adresinize gönderildi');
-    } catch (err: any) {
-      setError(err.message || 'Şifre sıfırlama işlemi sırasında bir hata oluştu');
+    } catch (err: unknown) { // 'any' tipini 'unknown' ile değiştirdik
+      if (err instanceof Error) {
+        setError(err.message || 'Şifre sıfırlama işlemi sırasında bir hata oluştu');
+      } else {
+        setError('Şifre sıfırlama işlemi sırasında bir hata oluştu');
+      }
     } finally {
       setLoading(false);
     }

@@ -1,13 +1,12 @@
 // src/components/blog/comment-section.tsx
-
 'use client';
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { CommentForm } from '@/components/blog/comment-form';
 import { CommentItem } from '@/components/blog/comment-item';
 import { getCommentsByPostId } from '@/lib/blog-service';
 import { BlogComment } from '@/types/blog';
+import Link from 'next/link'; // <a> etiketini Link ile değiştirmek için
 
 interface CommentSectionProps {
   postId: string;
@@ -19,7 +18,8 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchComments = async () => {
+  // useCallback kullanarak fetchComments fonksiyonunu memoize ediyoruz
+  const fetchComments = useCallback(async () => {
     setLoading(true);
     try {
       const fetchedComments = await getCommentsByPostId(postId);
@@ -31,15 +31,16 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [postId]);
 
   useEffect(() => {
     if (postId) {
       fetchComments();
     }
-  }, [postId]);
+  }, [fetchComments, postId]); // fetchComments bağımlılığını ekledik
 
-  const handleNewComment = (newComment: BlogComment) => {
+  const handleNewComment = () => {
+    // newComment parametresini kullanmıyoruz, bu yüzden kaldırdık
     // Yorum ekledikten sonra tüm yorumları yeniden yükle
     fetchComments();
   };
@@ -59,15 +60,15 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   return (
     <div className="space-y-8 mt-12">
       <h3 className="text-2xl font-bold">Yorumlar ({comments.length})</h3>
-
+      
       {user ? (
         <CommentForm postId={postId} onCommentSubmit={handleNewComment} />
       ) : (
         <div className="bg-primary/5 p-4 rounded-md text-center">
           <p className="mb-2">Yorum yapmak için giriş yapmalısınız.</p>
-          <a href="/giris" className="text-primary font-medium">
+          <Link href="/giris" className="text-primary font-medium">
             Giriş Yap &rarr;
-          </a>
+          </Link>
         </div>
       )}
 
@@ -78,8 +79,8 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
       ) : error ? (
         <div className="bg-error/10 text-error p-4 rounded-md text-center">
           {error}
-          <button 
-            onClick={fetchComments}
+          <button
+            onClick={() => fetchComments()}
             className="ml-2 underline hover:no-underline"
           >
             Yeniden Dene
@@ -92,9 +93,9 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
       ) : (
         <div className="space-y-6">
           {groupedComments.map(comment => (
-            <CommentItem 
-              key={comment.id} 
-              comment={comment} 
+            <CommentItem
+              key={comment.id}
+              comment={comment}
               replies={comment.replies}
               postId={postId}
               onCommentSubmit={handleNewComment}
