@@ -3,6 +3,13 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
 
 /**
+ * CSS sınıflarını birleştirmek için yardımcı fonksiyon
+ */
+export function cn(...classes: (string | undefined | boolean)[]) {
+  return classes.filter(Boolean).join(" ");
+}
+
+/**
  * Sunucu saati için Unix timestamp döndürür
  */
 export const getServerTimestamp = (): number => {

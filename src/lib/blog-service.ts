@@ -2,15 +2,12 @@
 
 import { getServerTimestamp, generateId } from '@/lib/utils';
 import { 
-  //getCollectionRef, 
-  //getDocRef, 
   getDocument, 
   setDocument, 
   queryCollection, 
   updateDocument, 
   deleteDocument,
-  uploadFile,
-  //deleteFile
+  uploadFile
 } from '@/lib/firebase-service';
 import { BlogPost, BlogComment } from '@/types/blog';
 import { QueryDocumentSnapshot } from 'firebase/firestore';
@@ -227,8 +224,36 @@ export const getCommentsByPostId = async (
   return result.data;
 };
 
+// Tüm yorumları listeleme (eklenen yeni fonksiyon)
+export const getComments = async (
+  status: 'all' | 'pending' | 'approved' | 'rejected' = 'all'
+): Promise<BlogComment[]> => {
+  const conditions = [];
+  
+  if (status !== 'all') {
+    conditions.push({ field: 'status', operator: '==', value: status });
+  }
+  
+  const result = await queryCollection<BlogComment>({
+    collectionPath: COMMENT_COLLECTION,
+    conditions,
+    orderByField: 'createdAt',
+    orderDirection: 'desc',
+    limitCount: 100
+  });
+  
+  return result.data;
+};
+
 // Blog kapak resmi yükleme
 export const uploadBlogCoverImage = async (file: File, postId: string): Promise<string> => {
   const path = `blog_images/${postId}/cover`;
+  return uploadFile(path, file);
+};
+
+// Blog içi resim yükleme
+export const uploadBlogImage = async (file: File, postId: string): Promise<string> => {
+  const fileName = file.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
+  const path = `blog_images/${postId}/content/${fileName}`;
   return uploadFile(path, file);
 };

@@ -1,12 +1,12 @@
 // src/components/admin/blog-editor.tsx
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
-import NextImage from 'next/image'; // Next.js Image bileşenini farklı bir isimle import edin
+import NextImage from 'next/image';
 import Table from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
@@ -21,8 +21,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { BlogPost } from '@/types/blog';
-import { createBlogPost, updateBlogPost, uploadBlogCoverImage } from '@/lib/blog-service';
-import { generateSlug } from '@/lib/blog-service';
+import { 
+  createBlogPost, 
+  updateBlogPost, 
+  uploadBlogCoverImage, 
+  uploadBlogImage,
+  generateSlug 
+} from '@/lib/blog-service';
 
 interface BlogEditorProps {
   post?: BlogPost;
@@ -30,23 +35,33 @@ interface BlogEditorProps {
 
 export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
   const router = useRouter();
-  const { user } = useAuth(); // userProfile değişkenini kaldırdık
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   
   const [title, setTitle] = useState(post?.title || '');
   const [slug, setSlug] = useState(post?.slug || '');
   const [content, setContent] = useState(post?.content || '');
   const [excerpt, setExcerpt] = useState(post?.excerpt || '');
   const [tags, setTags] = useState<string[]>(post?.tags || []);
-  //const [status, setStatus] = useState<'draft' | 'published'>(post?.status || 'draft');
   const [featured, setFeatured] = useState(post?.featured || false);
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverImageUrl, setCoverImageUrl] = useState(post?.coverImage || '');
+  const [metaTitle, setMetaTitle] = useState('');
+  const [metaDescription, setMetaDescription] = useState('');
+  
+  // Sekme yönetimi için state
+  const [activeTab, setActiveTab] = useState('content');
   
   const [tagInput, setTagInput] = useState('');
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [currentPostId, setCurrentPostId] = useState<string | null>(post?.id || null);
+  const [showSeoPreview, setShowSeoPreview] = useState(false);
 
   // Gelişmiş Tiptap editör
   const editor = useEditor({
@@ -62,11 +77,13 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
         HTMLAttributes: {
           class: 'rounded-md max-w-full h-auto',
         },
+        allowBase64: true,
       }),
       Table.configure({
         HTMLAttributes: {
           class: 'border-collapse table-auto w-full',
         },
+        resizable: true,
       }),
       TableRow,
       TableCell,
@@ -77,20 +94,119 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
     content: post?.content || '',
     onUpdate: ({ editor }) => {
       setContent(editor.getHTML());
+      debouncedAutoSave();
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose lg:prose-lg dark:prose-invert focus:outline-none',
+        class: 'prose prose-sm sm:prose lg:prose-lg dark:prose-invert focus:outline-none min-h-[300px] px-4 py-2',
         spellcheck: 'false',
       },
     },
   });
+  
+  // Otomatik kaydetme
+  const autoSave = useCallback(async () => {
+    if (!currentPostId || !user || !content || !title) return;
+    
+    try {
+      setAutoSaveStatus('saving');
+      
+      await updateBlogPost(currentPostId, {
+        title,
+        slug: slug || generateSlug(title),
+        content,
+        excerpt,
+        tags,
+        status: 'draft',
+        featured,
+        updatedAt: Date.now(), // Unix timestamp olarak kullanıyoruz
+      });
+      
+      setAutoSaveStatus('saved');
+      setLastSaved(new Date());
+      
+      // 3 saniye sonra durumu sıfırla
+      setTimeout(() => {
+        setAutoSaveStatus('idle');
+      }, 3000);
+    } catch (err) {
+      console.error('Otomatik kaydetme hatası:', err);
+      setAutoSaveStatus('error');
+    }
+  }, [currentPostId, user, content, title, slug, excerpt, tags, featured]);
+  
+  // Debounced otomatik kaydetme (30 saniye gecikmeli)
+  const debouncedAutoSave = useCallback(() => {
+    const timer = setTimeout(() => {
+      autoSave();
+    }, 30000);
+    
+    return () => clearTimeout(timer);
+  }, [autoSave]);
+  
   // Başlık değiştiğinde slug otomatik oluşturma
   useEffect(() => {
     if (!post && title && !slug) {
       setSlug(generateSlug(title));
     }
-  }, [title, post, slug]);
+    
+    // Meta başlık alanını otomatik doldur
+    if (title && !metaTitle) {
+      setMetaTitle(title);
+    }
+  }, [title, post, slug, metaTitle]);
+  
+  // Meta açıklamasını otomatik doldur
+  useEffect(() => {
+    if (excerpt && !metaDescription) {
+      setMetaDescription(excerpt);
+    }
+  }, [excerpt, metaDescription]);
+  
+  // Formun değiştiğini izle ve otomatik kaydetme işlemini başlat
+  useEffect(() => {
+    if (currentPostId) {
+      const timer = setTimeout(() => {
+        autoSave();
+      }, 30000);
+      
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, content, excerpt, tags, featured, currentPostId]);
+  
+  // Resim yükleme işlevi
+  const handleImageUpload = async (file: File): Promise<string> => {
+    try {
+      if (!currentPostId) {
+        throw new Error('Önce içeriği kaydetmelisiniz');
+      }
+      
+      return await uploadBlogImage(file, currentPostId);
+    } catch (err) {
+      console.error('Resim yükleme hatası:', err);
+      throw err;
+    }
+  };
+
+  const insertImage = async () => {
+    if (imageInputRef.current) {
+      imageInputRef.current.click();
+    }
+  };
+
+  const onImageInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.length) {
+      const file = e.target.files[0];
+      try {
+        const url = await handleImageUpload(file);
+        editor?.chain().focus().setImage({ src: url }).run();
+      } catch (error) {
+        console.error('Resim yükleme hatası:', error);
+        setError('Resim yüklenirken bir hata oluştu.');
+      }
+    }
+  };
 
   const handleSave = async (saveAsDraft = false) => {
     try {
@@ -123,7 +239,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
         excerpt: finalExcerpt,
         tags,
         status: saveAsDraft ? 'draft' : 'published',
-        featured
+        featured,
       };
 
       if (!post) {
@@ -135,6 +251,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
         };
 
         const newPostId = await createBlogPost(blogData as Omit<BlogPost, 'id' | 'publishedAt' | 'updatedAt' | 'viewCount'>);
+        setCurrentPostId(newPostId);
 
         // Kapak resmi yükleme (varsa)
         if (coverImage) {
@@ -149,6 +266,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
       } else {
         // Mevcut blog yazısını güncelleme
         await updateBlogPost(post.id as string, blogData);
+        setCurrentPostId(post.id as string);
 
         // Kapak resmi yükleme (varsa)
         if (coverImage) {
@@ -190,6 +308,54 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
     }
   };
 
+  // Tablo işlevleri
+  const addTable = () => {
+    editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+  };
+
+  const addColumnBefore = () => {
+    editor?.chain().focus().addColumnBefore().run();
+  };
+
+  const addColumnAfter = () => {
+    editor?.chain().focus().addColumnAfter().run();
+  };
+
+  const deleteColumn = () => {
+    editor?.chain().focus().deleteColumn().run();
+  };
+
+  const addRowBefore = () => {
+    editor?.chain().focus().addRowBefore().run();
+  };
+
+  const addRowAfter = () => {
+    editor?.chain().focus().addRowAfter().run();
+  };
+
+  const deleteRow = () => {
+    editor?.chain().focus().deleteRow().run();
+  };
+
+  const deleteTable = () => {
+    editor?.chain().focus().deleteTable().run();
+  };
+
+  const mergeOrSplitCells = () => {
+    const selection = editor?.state.selection;
+    
+    // Doğru tip kontrolü yapalım
+    const selectionObj = selection as unknown;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cellSelection = selectionObj as any;
+    
+    if (cellSelection && cellSelection.$anchorCell && typeof cellSelection.isColSelection === 'function') {
+      editor?.chain().focus().mergeCells().run();
+    } else {
+      editor?.chain().focus().splitCell().run();
+    }
+  };
+
   return (
     <div className="space-y-8">
       {error && (
@@ -203,6 +369,35 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
           {success}
         </div>
       )}
+
+      {/* Otomatik kaydetme durumu */}
+      <div className="text-sm text-gray-500">
+        {autoSaveStatus === 'saving' && (
+          <span className="flex items-center">
+            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Otomatik kaydediliyor...
+          </span>
+        )}
+        {autoSaveStatus === 'saved' && (
+          <span className="flex items-center text-success">
+            <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            {lastSaved && `Son kaydedilme: ${lastSaved.toLocaleTimeString()}`}
+          </span>
+        )}
+        {autoSaveStatus === 'error' && (
+          <span className="flex items-center text-error">
+            <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            Otomatik kaydetme başarısız
+          </span>
+        )}
+      </div>
 
       <div className="grid gap-6 md:grid-cols-3">
         <div className="md:col-span-2 space-y-6">
@@ -381,6 +576,87 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
                 
                 <span className="mx-1 h-6 border-r border-border"></span>
                 
+                {/* Tablo Kontrolleri */}
+                <div className="relative group">
+                  <button
+                    onClick={addTable}
+                    className={`p-1 rounded hover:bg-primary/5`}
+                    title="Tablo Ekle"
+                    type="button"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="3" y1="9" x2="21" y2="9"></line>
+                      <line x1="3" y1="15" x2="21" y2="15"></line>
+                      <line x1="9" y1="3" x2="9" y2="21"></line>
+                      <line x1="15" y1="3" x2="15" y2="21"></line>
+                    </svg>
+                  </button>
+                  
+                  {editor?.isActive('table') && (
+                    <div className="absolute z-10 mt-2 w-48 bg-card rounded-md shadow-lg p-2 hidden group-hover:block">
+                      <button
+                        onClick={addColumnBefore}
+                        className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
+                        type="button"
+                      >
+                        Öncesine Sütun Ekle
+                      </button>
+                      <button
+                        onClick={addColumnAfter}
+                        className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
+                        type="button"
+                      >
+                        Sonrasına Sütun Ekle
+                      </button>
+                      <button
+                        onClick={deleteColumn}
+                        className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
+                        type="button"
+                      >
+                        Sütunu Sil
+                      </button>
+                      <hr className="my-1 border-border" />
+                      <button
+                        onClick={addRowBefore}
+                        className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
+                        type="button"
+                      >
+                        Öncesine Satır Ekle
+                      </button>
+                      <button
+                        onClick={addRowAfter}
+                        className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
+                        type="button"
+                      >
+                        Sonrasına Satır Ekle
+                      </button>
+                      <button
+                        onClick={deleteRow}
+                        className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
+                        type="button"
+                      >
+                        Satırı Sil
+                      </button>
+                      <hr className="my-1 border-border" />
+                      <button
+                        onClick={mergeOrSplitCells}
+                        className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
+                        type="button"
+                      >
+                        Hücreleri Birleştir/Böl
+                      </button>
+                      <button
+                        onClick={deleteTable}
+                        className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
+                        type="button"
+                      >
+                        Tabloyu Sil
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
                 <button
                   onClick={() => {
                     const url = window.prompt('Link URL:');
@@ -401,12 +677,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
                 </button>
                 
                 <button
-                  onClick={() => {
-                    const url = window.prompt('Resim URL:');
-                    if (url) {
-                      editor?.chain().focus().setImage({ src: url }).run();
-                    }
-                  }}
+                  onClick={insertImage}
                   className="p-1 rounded hover:bg-primary/5"
                   title="Resim Ekle"
                   type="button"
@@ -417,6 +688,13 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
                     <polyline points="21 15 16 10 5 21"></polyline>
                   </svg>
                 </button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={imageInputRef}
+                  className="hidden"
+                  onChange={onImageInputChange}
+                />
                 
                 <button
                   onClick={() => editor?.chain().focus().undo().run()}
@@ -490,52 +768,150 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="mb-4">
-                <label htmlFor="excerpt" className="block text-sm font-medium mb-1">
-                  Özet
-                </label>
-                <Textarea
-                  id="excerpt"
-                  value={excerpt}
-                  onChange={(e) => setExcerpt(e.target.value)}
-                  placeholder="Blog yazınızın kısa özeti (160 karakter)"
-                  maxLength={160}
-                  rows={3}
-                />
-                <p className="text-xs text-foreground/60 mt-1">
-                  {excerpt.length}/160 karakter
-                </p>
-              </div>
+          {/* Basit Tab sistemi */}
+          <div className="w-full">
+            <div className="flex w-full border-b">
+              <button
+                type="button"
+                onClick={() => setActiveTab('content')}
+                className={`flex-1 px-4 py-2 text-sm font-medium ${
+                  activeTab === 'content'
+                    ? 'border-b-2 border-primary text-primary'
+                    : 'text-foreground/60 hover:text-foreground'
+                }`}
+              >
+                İçerik
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('seo')}
+                className={`flex-1 px-4 py-2 text-sm font-medium ${
+                  activeTab === 'seo'
+                    ? 'border-b-2 border-primary text-primary'
+                    : 'text-foreground/60 hover:text-foreground'
+                }`}
+              >
+                SEO
+              </button>
+            </div>
 
-              <div>
-                <label htmlFor="tags" className="block text-sm font-medium mb-1">
-                  Etiketler
-                </label>
-                <Input
-                  id="tags"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={handleTagAdd}
-                  placeholder="Etiket eklemek için yazıp Enter'a basın"
-                />
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="flex items-center gap-1">
-                      {tag}
-                      <button
-                        onClick={() => handleTagRemove(tag)}
-                        className="text-xs opacity-70 hover:opacity-100"
-                      >
-                        &times;
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
+            {activeTab === 'content' && (
+              <div className="mt-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="mb-4">
+                      <label htmlFor="excerpt" className="block text-sm font-medium mb-1">
+                        Özet
+                      </label>
+                      <Textarea
+                        id="excerpt"
+                        value={excerpt}
+                        onChange={(e) => setExcerpt(e.target.value)}
+                        placeholder="Blog yazınızın kısa özeti (160 karakter)"
+                        maxLength={160}
+                        rows={3}
+                      />
+                      <p className="text-xs text-foreground/60 mt-1">
+                        {excerpt.length}/160 karakter
+                      </p>
+                    </div>
+
+                    <div>
+                      <label htmlFor="tags" className="block text-sm font-medium mb-1">
+                        Etiketler
+                      </label>
+                      <Input
+                        id="tags"
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyDown={handleTagAdd}
+                        placeholder="Etiket eklemek için yazıp Enter'a basın"
+                      />
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {tags.map((tag) => (
+                          <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                            {tag}
+                            <button
+                              onClick={() => handleTagRemove(tag)}
+                              className="text-xs opacity-70 hover:opacity-100"
+                              type="button"
+                            >
+                              &times;
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
+            )}
+
+            {activeTab === 'seo' && (
+              <div className="mt-4">
+                <Card>
+                  <CardContent className="pt-6 space-y-4">
+                    <div>
+                      <label htmlFor="metaTitle" className="block text-sm font-medium mb-1">
+                        Meta Başlık
+                      </label>
+                      <Input
+                        id="metaTitle"
+                        value={metaTitle}
+                        onChange={(e) => setMetaTitle(e.target.value)}
+                        placeholder="SEO için meta başlık (70 karakter ideal)"
+                        maxLength={70}
+                      />
+                      <p className="text-xs text-foreground/60 mt-1">
+                        {metaTitle.length}/70 karakter
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="metaDescription" className="block text-sm font-medium mb-1">
+                        Meta Açıklama
+                      </label>
+                      <Textarea
+                        id="metaDescription"
+                        value={metaDescription}
+                        onChange={(e) => setMetaDescription(e.target.value)}
+                        placeholder="SEO için meta açıklama (150-160 karakter ideal)"
+                        maxLength={160}
+                        rows={3}
+                      />
+                      <p className="text-xs text-foreground/60 mt-1">
+                        {metaDescription.length}/160 karakter
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setShowSeoPreview(!showSeoPreview)}
+                        className="text-sm text-primary hover:underline"
+                      >
+                        {showSeoPreview ? 'SEO Önizlemeyi Gizle' : 'SEO Önizlemeyi Göster'}
+                      </button>
+                      
+                      {showSeoPreview && (
+                        <div className="mt-3 p-4 border border-border rounded-md bg-background">
+                          <div className="text-primary text-base hover:underline">
+                            {metaTitle || title || 'Başlık'}
+                          </div>
+                          <div className="text-success text-xs">
+                            https://sata.com/blog/{slug || 'blog-yazisi-slug'}
+                          </div>
+                          <div className="text-sm text-foreground/80 mt-1">
+                            {metaDescription || excerpt || 'Meta açıklama burada görünecek. SEO için 150-160 karakter uzunluğunda bir açıklama yazmanız önerilir.'}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
 
           <Card>
             <CardContent className="pt-6">
@@ -567,6 +943,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
                         setCoverImageUrl('');
                       }}
                       className="absolute top-2 right-2 bg-background text-foreground p-1 rounded-full"
+                      type="button"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -593,4 +970,4 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
       </div>
     </div>
   );
-}
+};

@@ -1,5 +1,4 @@
 // src/components/blog/comment-form.tsx
-
 'use client';
 
 import React, { useState } from 'react';
@@ -26,6 +25,18 @@ export const CommentForm: React.FC<CommentFormProps> = ({
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [charCount, setCharCount] = useState(0);
+  
+  // Maksimum karakter sayısı
+  const MAX_CHARS = 1000;
+
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newContent = e.target.value;
+    if (newContent.length <= MAX_CHARS) {
+      setContent(newContent);
+      setCharCount(newContent.length);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +81,7 @@ export const CommentForm: React.FC<CommentFormProps> = ({
       
       // Formu sıfırla
       setContent('');
+      setCharCount(0);
     } catch (err) {
       console.error('Yorum gönderilirken hata oluştu:', err);
       setError('Yorumunuz gönderilirken bir hata oluştu. Lütfen tekrar deneyin.');
@@ -83,12 +95,20 @@ export const CommentForm: React.FC<CommentFormProps> = ({
       <div>
         <Textarea
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={handleContentChange}
           placeholder="Yorumunuzu buraya yazın..."
           rows={4}
           disabled={loading}
+          className="resize-y"
         />
-        {error && <p className="text-error text-sm mt-1">{error}</p>}
+        <div className="mt-1 flex justify-between items-center">
+          <div>
+            {error && <p className="text-error text-sm">{error}</p>}
+          </div>
+          <div className={`text-xs ${charCount > MAX_CHARS * 0.8 ? 'text-amber-600' : 'text-foreground/60'}`}>
+            {charCount}/{MAX_CHARS} karakter
+          </div>
+        </div>
       </div>
 
       <div className="flex justify-end gap-2">

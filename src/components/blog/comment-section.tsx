@@ -6,7 +6,8 @@ import { CommentForm } from '@/components/blog/comment-form';
 import { CommentItem } from '@/components/blog/comment-item';
 import { getCommentsByPostId } from '@/lib/blog-service';
 import { BlogComment } from '@/types/blog';
-import Link from 'next/link'; // <a> etiketini Link ile değiştirmek için
+import Link from 'next/link';
+import { Alert } from '@/components/ui/alert';
 
 interface CommentSectionProps {
   postId: string;
@@ -17,6 +18,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   const [comments, setComments] = useState<BlogComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // useCallback kullanarak fetchComments fonksiyonunu memoize ediyoruz
   const fetchComments = useCallback(async () => {
@@ -37,13 +39,20 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
     if (postId) {
       fetchComments();
     }
-  }, [fetchComments, postId]); // fetchComments bağımlılığını ekledik
+  }, [fetchComments, postId]);
 
-  const handleNewComment = () => {
-    // newComment parametresini kullanmıyoruz, bu yüzden kaldırdık
-    // Yorum ekledikten sonra tüm yorumları yeniden yükle
+  const handleNewComment = useCallback(() => {
+    // Yeni yorum eklendiğinde başarı mesajı göster
+    setSuccessMessage('Yorumunuz başarıyla gönderildi. Onaylandıktan sonra görüntülenecektir.');
+    
+    // 5 saniye sonra başarı mesajını kaldır
+    setTimeout(() => {
+      setSuccessMessage(null);
+    }, 5000);
+    
+    // Yorumları yeniden yükle
     fetchComments();
-  };
+  }, [fetchComments]);
 
   // Üst seviye yorumlar ve cevapları grupla
   const groupedComments = comments.reduce((acc, comment) => {
@@ -60,6 +69,12 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   return (
     <div className="space-y-8 mt-12">
       <h3 className="text-2xl font-bold">Yorumlar ({comments.length})</h3>
+      
+      {successMessage && (
+        <Alert variant="success" className="bg-green-50 text-green-800 border border-green-200 mb-4">
+          {successMessage}
+        </Alert>
+      )}
       
       {user ? (
         <CommentForm postId={postId} onCommentSubmit={handleNewComment} />

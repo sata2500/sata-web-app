@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@radix-ui/react-tabs": "^1.1.11",
     "@tailwindcss/typography": "^0.5.16",
     "@tiptap/extension-image": "^2.12.0",
     "@tiptap/extension-link": "^2.12.0",
@@ -21,12 +22,17 @@
     "@tiptap/pm": "^2.12.0",
     "@tiptap/react": "^2.12.0",
     "@tiptap/starter-kit": "^2.12.0",
+    "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "debounce": "^2.2.0",
     "firebase": "^11.6.1",
     "firebase-admin": "^13.3.0",
+    "lodash": "^4.17.21",
+    "lowlight": "^3.3.0",
     "next": "15.3.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.3.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
