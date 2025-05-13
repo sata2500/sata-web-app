@@ -2,15 +2,33 @@
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { auth } from '@/lib/server-auth';
 
 // Admin sayfalarını koruyan middleware
-export function middleware(request: NextRequest) {
-  const sessionCookie = request.cookies.get('firebaseSessionToken')?.value;
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  // Admin sayfaları için oturum kontrolü
+  
+  // Admin sayfaları için yetki kontrolü
   if (pathname.startsWith('/admin')) {
-    if (!sessionCookie) {
+    try {
+      // Oturum bilgisini kontrol et
+      const session = await auth();
+      
+      // Kullanıcı giriş yapmamış veya admin değilse, yönlendir
+      if (!session?.user) {
+        // Oturum açılmamışsa giriş sayfasına yönlendir
+        const url = new URL('/giris', request.url);
+        url.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(url);
+      }
+      
+      if (!session.user.isAdmin) {
+        // Admin değilse ana sayfaya yönlendir
+        return NextResponse.redirect(new URL('/', request.url));
+      }
+    } catch (error) {
+      // Hata durumunda giriş sayfasına yönlendir
+      console.error('Oturum doğrulama hatası:', error);
       const url = new URL('/giris', request.url);
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);

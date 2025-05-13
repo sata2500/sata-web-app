@@ -3,20 +3,22 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image'; // Bu satırı ekledim
+import Image from 'next/image';
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
 import { ThemeSwitch } from '@/components/theme-switch';
 import { Container } from '@/components/ui/container';
+import { AdminOnly } from '@/components/ui/authorization';
+import { SearchBar } from '@/components/search/search-bar';
 
 export const Header = () => {
-  const { user, loading, signOut } = useAuth(); // logout yerine signOut kullanın
+  const { user, loading, signOut } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
-      await signOut(); // logout yerine signOut kullanın
+      await signOut();
       setIsMobileMenuOpen(false);
     } catch (err) {
       console.error('Çıkış yaparken hata oluştu:', err);
@@ -43,6 +45,11 @@ export const Header = () => {
             <span className="font-heading text-xl font-bold">SaTA</span>
           </Link>
 
+          {/* Search Bar - Sadece desktop görünümünde */}
+          <div className="hidden md:flex mx-4 flex-1 justify-center">
+            <SearchBar />
+          </div>
+
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
             <Link href="/blog" className="text-foreground/70 hover:text-foreground transition-colors">
@@ -54,6 +61,15 @@ export const Header = () => {
             <Link href="/iletisim" className="text-foreground/70 hover:text-foreground transition-colors">
               İletişim
             </Link>
+            
+            {/* Desktop Admin Link - Sadece admin yetkisi olanlar görebilir */}
+            {!loading && user && (
+              <AdminOnly>
+                <Link href="/admin" className="text-foreground/70 hover:text-foreground transition-colors">
+                  Admin
+                </Link>
+              </AdminOnly>
+            )}
           </nav>
 
           {/* Right Section */}
@@ -130,6 +146,11 @@ export const Header = () => {
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-border">
+            {/* Mobil arama çubuğu */}
+            <div className="mb-4">
+              <SearchBar fullWidth placeholder="Ara..." />
+            </div>
+            
             <nav className="flex flex-col space-y-4">
               <Link
                 href="/blog"
@@ -162,7 +183,9 @@ export const Header = () => {
                   >
                     Profilim
                   </Link>
-                  {user.isAdmin && (
+                  
+                  {/* Admin Linki - AdminOnly bileşeniyle izin kontrolü */}
+                  <AdminOnly>
                     <Link
                       href="/admin"
                       className="text-foreground/70 hover:text-foreground"
@@ -170,7 +193,8 @@ export const Header = () => {
                     >
                       Admin Paneli
                     </Link>
-                  )}
+                  </AdminOnly>
+                  
                   <button
                     onClick={handleLogout}
                     className="text-left text-foreground/70 hover:text-foreground"
