@@ -1,8 +1,8 @@
 // src/components/seo/schema-markup.tsx
 import React from 'react';
 
-// BlogPost tipini tanımlıyoruz
-interface BlogPost {
+// BlogPost interface'ini type olarak değiştirdik
+type BlogPost = {
   id?: string;
   title: string;
   slug: string;
@@ -27,7 +27,7 @@ interface BlogPost {
   viewCount: number;
   commentCount?: number;
   featured?: boolean;
-}
+};
 
 // Breadcrumb öğe tip tanımı
 interface BreadcrumbItem {
