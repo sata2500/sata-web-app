@@ -27,7 +27,19 @@ export default async function BlogPage({
   
   return (
     <>
-      <SchemaMarkup type="blog" />
+      {/* data prop'unu ekliyoruz */}
+      <SchemaMarkup 
+        type="website" 
+        data={{
+          name: 'SaTA Blog',
+          url: 'https://sata.com/blog',
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: 'https://sata.com/blog/arama?q={search_term_string}',
+            'query-input': 'required name=search_term_string'
+          }
+        }}
+      />
       
       <Container>
         <div className="py-12">
