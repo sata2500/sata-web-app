@@ -40,7 +40,8 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Middleware'i hangi yollarda çalıştıracağımızı belirleyen konfigürasyon
+// Burada config nasıl olmalı:
 export const config = {
   matcher: '/admin/:path*',
+  runtime: 'nodejs', // Bu satırı ekleyin, middleware içinde de belirtebilirsiniz
 };

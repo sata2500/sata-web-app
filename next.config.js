@@ -7,12 +7,9 @@ const nextConfig = {
       'lh3.googleusercontent.com',
     ],
   },
-  experimental: {
-    // Node.js Middleware desteği için
-    nodeMiddleware: true,
-  },
+  // nodeMiddleware yerine runtime='nodejs' kullanılacak
+  // experimental bölümünü tamamen kaldırıyoruz
   transpilePackages: ['firebase-admin'],
-  // webpack ayarlarını özelleştirme
   webpack: (config, { isServer }) => {
     // Node.js modüllerini daha iyi ele almak için
     if (isServer) {
