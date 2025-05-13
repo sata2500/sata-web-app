@@ -40,6 +40,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
       ),
       exact: false,
     },
+    // Yeni kategori menü öğesini ekliyoruz
+    {
+      name: 'Kategoriler',
+      href: '/admin/kategoriler',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+        </svg>
+      ),
+      exact: false,
+    },
     {
       name: 'Yorumlar',
       href: '/admin/yorumlar',
@@ -135,13 +146,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
           >
             <span className="mr-3">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
-              </svg>
-            </span>
-            Siteye Dön
-          </Link>
-        </div>
-      </aside>
-    </>
-  );
+               <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+             </svg>
+           </span>
+           Siteye Dön
+         </Link>
+       </div>
+     </aside>
+   </>
+ );
 };

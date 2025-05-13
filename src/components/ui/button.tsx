@@ -2,7 +2,8 @@
 import React, { forwardRef } from 'react';
 import Link from 'next/link';
 
-type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'link';
+// Danger varyantını ekleyelim
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'link' | 'danger';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -37,13 +38,14 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
     lg: 'h-12 px-6 text-base rounded-lg',
   };
   
-  // Varyant sınıfları
+  // Varyant sınıfları - danger varyantını ekleyelim
   const variantClasses = {
     primary: 'bg-primary text-white hover:bg-primary-dark',
     secondary: 'bg-secondary text-white hover:bg-secondary-dark',
     outline: 'border border-border bg-transparent hover:bg-foreground/5',
     ghost: 'bg-transparent hover:bg-foreground/5',
     link: 'bg-transparent underline-offset-4 hover:underline text-primary hover:text-primary-dark p-0 h-auto',
+    danger: 'bg-error text-white hover:bg-error/90', // Tehlikeli eylemler için kırmızı buton
   };
   
   // Yükleniyor durumu

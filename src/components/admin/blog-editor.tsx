@@ -1,4 +1,4 @@
-// src/components/admin/blog-editor.tsx
+// src/components/admin/blog-editor.tsx - kategori eklenmiş hali
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -20,13 +20,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { BlogPost } from '@/types/blog';
+import { BlogPost, Category } from '@/types/blog';
 import { 
   createBlogPost, 
   updateBlogPost, 
   uploadBlogCoverImage, 
   uploadBlogImage,
-  generateSlug 
+  generateSlug,
+  getCategories
 } from '@/lib/blog-service';
 
 interface BlogEditorProps {
@@ -52,6 +53,9 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
   const [coverImageUrl, setCoverImageUrl] = useState(post?.coverImage || '');
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
+  // Kategori seçme özelliği için yeni state'ler
+  const [categoryId, setCategoryId] = useState<string | null>(post?.categoryId || null);
+  const [categories, setCategories] = useState<Category[]>([]);
   
   // Sekme yönetimi için state
   const [activeTab, setActiveTab] = useState('content');
@@ -62,6 +66,20 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [currentPostId, setCurrentPostId] = useState<string | null>(post?.id || null);
   const [showSeoPreview, setShowSeoPreview] = useState(false);
+
+  // Kategorileri yükleme
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await getCategories();
+        setCategories(data);
+      } catch (err) {
+        console.error('Kategoriler yüklenirken hata oluştu:', err);
+      }
+    };
+    
+    fetchCategories();
+  }, []);
 
   // Gelişmiş Tiptap editör
   const editor = useEditor({
@@ -117,6 +135,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
         content,
         excerpt,
         tags,
+        categoryId, // Kategori ID'sini ekle
         status: 'draft',
         featured,
         updatedAt: Date.now(), // Unix timestamp olarak kullanıyoruz
@@ -133,7 +152,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
       console.error('Otomatik kaydetme hatası:', err);
       setAutoSaveStatus('error');
     }
-  }, [currentPostId, user, content, title, slug, excerpt, tags, featured]);
+  }, [currentPostId, user, content, title, slug, excerpt, tags, categoryId, featured]);
   
   // Debounced otomatik kaydetme (30 saniye gecikmeli)
   const debouncedAutoSave = useCallback(() => {
@@ -173,7 +192,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
       return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, content, excerpt, tags, featured, currentPostId]);
+  }, [title, content, excerpt, tags, featured, categoryId, currentPostId]);
   
   // Resim yükleme işlevi
   const handleImageUpload = async (file: File): Promise<string> => {
@@ -238,6 +257,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
         content,
         excerpt: finalExcerpt,
         tags,
+        categoryId, // Kategori ID'sini ekle
         status: saveAsDraft ? 'draft' : 'published',
         featured,
       };
@@ -597,377 +617,400 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ post }) => {
                     <div className="absolute z-10 mt-2 w-48 bg-card rounded-md shadow-lg p-2 hidden group-hover:block">
                       <button
                         onClick={addColumnBefore}
-                        className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
-                        type="button"
-                      >
-                        Öncesine Sütun Ekle
-                      </button>
-                      <button
-                        onClick={addColumnAfter}
-                        className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
-                        type="button"
-                      >
-                        Sonrasına Sütun Ekle
-                      </button>
-                      <button
-                        onClick={deleteColumn}
-                        className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
-                        type="button"
-                      >
-                        Sütunu Sil
-                      </button>
-                      <hr className="my-1 border-border" />
-                      <button
-                        onClick={addRowBefore}
-                        className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
-                        type="button"
-                      >
-                        Öncesine Satır Ekle
-                      </button>
-                      <button
-                        onClick={addRowAfter}
-                        className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
-                        type="button"
-                      >
-                        Sonrasına Satır Ekle
-                      </button>
-                      <button
-                        onClick={deleteRow}
-                        className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
-                        type="button"
-                      >
-                        Satırı Sil
-                      </button>
-                      <hr className="my-1 border-border" />
-                      <button
-                        onClick={mergeOrSplitCells}
-                        className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
-                        type="button"
-                      >
-                        Hücreleri Birleştir/Böl
-                      </button>
-                      <button
-                        onClick={deleteTable}
-                        className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
-                        type="button"
-                      >
-                        Tabloyu Sil
-                      </button>
-                    </div>
-                  )}
-                </div>
-                
-                <button
-                  onClick={() => {
-                    const url = window.prompt('Link URL:');
-                    if (url) {
-                      editor?.chain().focus().setLink({ href: url }).run();
-                    } else if (editor?.isActive('link')) {
-                      editor?.chain().focus().unsetLink().run();
-                    }
-                  }}
-                  className={`p-1 rounded ${editor?.isActive('link') ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
-                  title="Link Ekle"
-                  type="button"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                  </svg>
-                </button>
-                
-                <button
-                  onClick={insertImage}
-                  className="p-1 rounded hover:bg-primary/5"
-                  title="Resim Ekle"
-                  type="button"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                    <polyline points="21 15 16 10 5 21"></polyline>
-                  </svg>
-                </button>
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={imageInputRef}
-                  className="hidden"
-                  onChange={onImageInputChange}
-                />
-                
-                <button
-                  onClick={() => editor?.chain().focus().undo().run()}
-                  disabled={!editor?.can().undo()}
-                  className="p-1 rounded hover:bg-primary/5 ml-auto"
-                  title="Geri Al"
-                  type="button"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 7v6h6"></path>
-                    <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
-                  </svg>
-                </button>
-                
-                <button
-                  onClick={() => editor?.chain().focus().redo().run()}
-                  disabled={!editor?.can().redo()}
-                  className="p-1 rounded hover:bg-primary/5"
-                  title="İleri Al"
-                  type="button"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 7v6h-6"></path>
-                    <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path>
-                  </svg>
-                </button>
-              </div>
-              
-              {/* Editor Content */}
-              <EditorContent editor={editor} className="p-4 min-h-[350px]" />
-            </div>
-          </div>
-        </div>
+                       className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
+                       type="button"
+                     >
+                       Öncesine Sütun Ekle
+                     </button>
+                     <button
+                       onClick={addColumnAfter}
+                       className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
+                       type="button"
+                     >
+                       Sonrasına Sütun Ekle
+                     </button>
+                     <button
+                       onClick={deleteColumn}
+                       className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
+                       type="button"
+                     >
+                       Sütunu Sil
+                     </button>
+                     <hr className="my-1 border-border" />
+                     <button
+                       onClick={addRowBefore}
+                       className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
+                       type="button"
+                     >
+                       Öncesine Satır Ekle
+                     </button>
+                     <button
+                       onClick={addRowAfter}
+                       className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
+                       type="button"
+                     >
+                       Sonrasına Satır Ekle
+                     </button>
+                     <button
+                       onClick={deleteRow}
+                       className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
+                       type="button"
+                     >
+                       Satırı Sil
+                     </button>
+                     <hr className="my-1 border-border" />
+                     <button
+                       onClick={mergeOrSplitCells}
+                       className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
+                       type="button"
+                     >
+                       Hücreleri Birleştir/Böl
+                     </button>
+                     <button
+                       onClick={deleteTable}
+                       className="w-full text-left px-3 py-1 text-sm rounded hover:bg-primary/5"
+                       type="button"
+                     >
+                       Tabloyu Sil
+                     </button>
+                   </div>
+                 )}
+               </div>
+               
+               <button
+                 onClick={() => {
+                   const url = window.prompt('Link URL:');
+                   if (url) {
+                     editor?.chain().focus().setLink({ href: url }).run();
+                   } else if (editor?.isActive('link')) {
+                     editor?.chain().focus().unsetLink().run();
+                   }
+                 }}
+                 className={`p-1 rounded ${editor?.isActive('link') ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
+                 title="Link Ekle"
+                 type="button"
+               >
+                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                   <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                   <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                 </svg>
+               </button>
+               
+               <button
+                 onClick={insertImage}
+                 className="p-1 rounded hover:bg-primary/5"
+                 title="Resim Ekle"
+                 type="button"
+               >
+                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                   <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                   <polyline points="21 15 16 10 5 21"></polyline>
+                 </svg>
+               </button>
+               <input
+                 type="file"
+                 accept="image/*"
+                 ref={imageInputRef}
+                 className="hidden"
+                 onChange={onImageInputChange}
+               />
+               
+               <button
+                 onClick={() => editor?.chain().focus().undo().run()}
+                 disabled={!editor?.can().undo()}
+                 className="p-1 rounded hover:bg-primary/5 ml-auto"
+                 title="Geri Al"
+                 type="button"
+               >
+                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                   <path d="M3 7v6h6"></path>
+                   <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+                 </svg>
+               </button>
+               
+               <button
+                 onClick={() => editor?.chain().focus().redo().run()}
+                 disabled={!editor?.can().redo()}
+                 className="p-1 rounded hover:bg-primary/5"
+                 title="İleri Al"
+                 type="button"
+               >
+                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                   <path d="M21 7v6h-6"></path>
+                   <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path>
+                 </svg>
+               </button>
+             </div>
+             
+             {/* Editor Content */}
+             <EditorContent editor={editor} className="p-4 min-h-[350px]" />
+           </div>
+         </div>
+       </div>
 
-        <div className="space-y-6">
-          <Card>
-            <CardContent className="pt-6 space-y-4">
-              <div className="flex justify-between gap-4">
-                <Button
-                  variant="outline"
-                  onClick={() => handleSave(true)}
-                  disabled={loading}
-                >
-                  Taslak Olarak Kaydet
-                </Button>
-                <Button
-                  onClick={() => handleSave(false)}
-                  disabled={loading}
-                >
-                  {post?.status === 'published' ? 'Güncelle' : 'Yayınla'}
-                </Button>
-              </div>
+       <div className="space-y-6">
+         <Card>
+           <CardContent className="pt-6 space-y-4">
+             <div className="flex justify-between gap-4">
+               <Button
+                 variant="outline"
+                 onClick={() => handleSave(true)}
+                 disabled={loading}
+               >
+                 Taslak Olarak Kaydet
+               </Button>
+               <Button
+                 onClick={() => handleSave(false)}
+                 disabled={loading}
+               >
+                 {post?.status === 'published' ? 'Güncelle' : 'Yayınla'}
+               </Button>
+             </div>
 
-              <div>
-                <div className="flex items-center mb-3">
-                  <input
-                    type="checkbox"
-                    id="featured"
-                    checked={featured}
-                    onChange={(e) => setFeatured(e.target.checked)}
-                    className="mr-2"
-                  />
-                  <label htmlFor="featured" className="text-sm font-medium">
-                    Öne Çıkan
-                  </label>
-                </div>
-                <p className="text-xs text-foreground/60">
-                  Bu yazı ana sayfada öne çıkanlar bölümünde gösterilecek.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+             <div>
+               <div className="flex items-center mb-3">
+                 <input
+                   type="checkbox"
+                   id="featured"
+                   checked={featured}
+                   onChange={(e) => setFeatured(e.target.checked)}
+                   className="mr-2"
+                 />
+                 <label htmlFor="featured" className="text-sm font-medium">
+                   Öne Çıkan
+                 </label>
+               </div>
+               <p className="text-xs text-foreground/60">
+                 Bu yazı ana sayfada öne çıkanlar bölümünde gösterilecek.
+               </p>
+             </div>
+             
+             {/* Kategori seçici - Yeni eklendi */}
+             <div>
+               <label htmlFor="categoryId" className="block text-sm font-medium mb-1">
+                 Kategori
+               </label>
+               <select
+                 id="categoryId"
+                 value={categoryId || ''}
+                 onChange={(e) => setCategoryId(e.target.value || null)}
+                 className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
+               >
+                 <option value="">Kategorisiz</option>
+                 {categories.map((category) => (
+                   <option key={category.id} value={category.id}>
+                     {category.name}
+                   </option>
+                 ))}
+               </select>
+               <p className="text-xs text-foreground/60 mt-1">
+                 Blog yazısını bir kategoriye atayın.
+               </p>
+             </div>
+           </CardContent>
+         </Card>
 
-          {/* Basit Tab sistemi */}
-          <div className="w-full">
-            <div className="flex w-full border-b">
-              <button
-                type="button"
-                onClick={() => setActiveTab('content')}
-                className={`flex-1 px-4 py-2 text-sm font-medium ${
-                  activeTab === 'content'
-                    ? 'border-b-2 border-primary text-primary'
-                    : 'text-foreground/60 hover:text-foreground'
-                }`}
-              >
-                İçerik
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('seo')}
-                className={`flex-1 px-4 py-2 text-sm font-medium ${
-                  activeTab === 'seo'
-                    ? 'border-b-2 border-primary text-primary'
-                    : 'text-foreground/60 hover:text-foreground'
-                }`}
-              >
-                SEO
-              </button>
-            </div>
+         {/* Basit Tab sistemi */}
+         <div className="w-full">
+           <div className="flex w-full border-b">
+             <button
+               type="button"
+               onClick={() => setActiveTab('content')}
+               className={`flex-1 px-4 py-2 text-sm font-medium ${
+                 activeTab === 'content'
+                   ? 'border-b-2 border-primary text-primary'
+                   : 'text-foreground/60 hover:text-foreground'
+               }`}
+             >
+               İçerik
+             </button>
+             <button
+               type="button"
+               onClick={() => setActiveTab('seo')}
+               className={`flex-1 px-4 py-2 text-sm font-medium ${
+                 activeTab === 'seo'
+                   ? 'border-b-2 border-primary text-primary'
+                   : 'text-foreground/60 hover:text-foreground'
+               }`}
+             >
+               SEO
+             </button>
+           </div>
 
-            {activeTab === 'content' && (
-              <div className="mt-4">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="mb-4">
-                      <label htmlFor="excerpt" className="block text-sm font-medium mb-1">
-                        Özet
-                      </label>
-                      <Textarea
-                        id="excerpt"
-                        value={excerpt}
-                        onChange={(e) => setExcerpt(e.target.value)}
-                        placeholder="Blog yazınızın kısa özeti (160 karakter)"
-                        maxLength={160}
-                        rows={3}
-                      />
-                      <p className="text-xs text-foreground/60 mt-1">
-                        {excerpt.length}/160 karakter
-                      </p>
-                    </div>
+           {activeTab === 'content' && (
+             <div className="mt-4">
+               <Card>
+                 <CardContent className="pt-6">
+                   <div className="mb-4">
+                     <label htmlFor="excerpt" className="block text-sm font-medium mb-1">
+                       Özet
+                     </label>
+                     <Textarea
+                       id="excerpt"
+                       value={excerpt}
+                       onChange={(e) => setExcerpt(e.target.value)}
+                       placeholder="Blog yazınızın kısa özeti (160 karakter)"
+                       maxLength={160}
+                       rows={3}
+                     />
+                     <p className="text-xs text-foreground/60 mt-1">
+                       {excerpt.length}/160 karakter
+                     </p>
+                   </div>
 
-                    <div>
-                      <label htmlFor="tags" className="block text-sm font-medium mb-1">
-                        Etiketler
-                      </label>
-                      <Input
-                        id="tags"
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        onKeyDown={handleTagAdd}
-                        placeholder="Etiket eklemek için yazıp Enter'a basın"
-                      />
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {tags.map((tag) => (
-                          <Badge key={tag} variant="secondary" className="flex items-center gap-1">
-                            {tag}
-                            <button
-                              onClick={() => handleTagRemove(tag)}
-                              className="text-xs opacity-70 hover:opacity-100"
-                              type="button"
-                            >
-                              &times;
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+                   <div>
+                     <label htmlFor="tags" className="block text-sm font-medium mb-1">
+                       Etiketler
+                     </label>
+                     <Input
+                       id="tags"
+                       value={tagInput}
+                       onChange={(e) => setTagInput(e.target.value)}
+                       onKeyDown={handleTagAdd}
+                       placeholder="Etiket eklemek için yazıp Enter'a basın"
+                     />
+                     <div className="flex flex-wrap gap-2 mt-2">
+                       {tags.map((tag) => (
+                         <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                           {tag}
+                           <button
+                             onClick={() => handleTagRemove(tag)}
+                             className="text-xs opacity-70 hover:opacity-100"
+                             type="button"
+                           >
+                             &times;
+                           </button>
+                         </Badge>
+                       ))}
+                     </div>
+                   </div>
+                 </CardContent>
+               </Card>
+             </div>
+           )}
 
-            {activeTab === 'seo' && (
-              <div className="mt-4">
-                <Card>
-                  <CardContent className="pt-6 space-y-4">
-                    <div>
-                      <label htmlFor="metaTitle" className="block text-sm font-medium mb-1">
-                        Meta Başlık
-                      </label>
-                      <Input
-                        id="metaTitle"
-                        value={metaTitle}
-                        onChange={(e) => setMetaTitle(e.target.value)}
-                        placeholder="SEO için meta başlık (70 karakter ideal)"
-                        maxLength={70}
-                      />
-                      <p className="text-xs text-foreground/60 mt-1">
-                        {metaTitle.length}/70 karakter
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="metaDescription" className="block text-sm font-medium mb-1">
-                        Meta Açıklama
-                      </label>
-                      <Textarea
-                        id="metaDescription"
-                        value={metaDescription}
-                        onChange={(e) => setMetaDescription(e.target.value)}
-                        placeholder="SEO için meta açıklama (150-160 karakter ideal)"
-                        maxLength={160}
-                        rows={3}
-                      />
-                      <p className="text-xs text-foreground/60 mt-1">
-                        {metaDescription.length}/160 karakter
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() => setShowSeoPreview(!showSeoPreview)}
-                        className="text-sm text-primary hover:underline"
-                      >
-                        {showSeoPreview ? 'SEO Önizlemeyi Gizle' : 'SEO Önizlemeyi Göster'}
-                      </button>
-                      
-                      {showSeoPreview && (
-                        <div className="mt-3 p-4 border border-border rounded-md bg-background">
-                          <div className="text-primary text-base hover:underline">
-                            {metaTitle || title || 'Başlık'}
-                          </div>
-                          <div className="text-success text-xs">
-                            https://sata.com/blog/{slug || 'blog-yazisi-slug'}
-                          </div>
-                          <div className="text-sm text-foreground/80 mt-1">
-                            {metaDescription || excerpt || 'Meta açıklama burada görünecek. SEO için 150-160 karakter uzunluğunda bir açıklama yazmanız önerilir.'}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </div>
+           {activeTab === 'seo' && (
+             <div className="mt-4">
+               <Card>
+                 <CardContent className="pt-6 space-y-4">
+                   <div>
+                     <label htmlFor="metaTitle" className="block text-sm font-medium mb-1">
+                       Meta Başlık
+                     </label>
+                     <Input
+                       id="metaTitle"
+                       value={metaTitle}
+                       onChange={(e) => setMetaTitle(e.target.value)}
+                       placeholder="SEO için meta başlık (70 karakter ideal)"
+                       maxLength={70}
+                     />
+                     <p className="text-xs text-foreground/60 mt-1">
+                       {metaTitle.length}/70 karakter
+                     </p>
+                   </div>
+                   
+                   <div>
+                     <label htmlFor="metaDescription" className="block text-sm font-medium mb-1">
+                       Meta Açıklama
+                     </label>
+                     <Textarea
+                       id="metaDescription"
+                       value={metaDescription}
+                       onChange={(e) => setMetaDescription(e.target.value)}
+                       placeholder="SEO için meta açıklama (150-160 karakter ideal)"
+                       maxLength={160}
+                       rows={3}
+                     />
+                     <p className="text-xs text-foreground/60 mt-1">
+                       {metaDescription.length}/160 karakter
+                     </p>
+                   </div>
+                   
+                   <div>
+                     <button
+                       type="button"
+                       onClick={() => setShowSeoPreview(!showSeoPreview)}
+                       className="text-sm text-primary hover:underline"
+                     >
+                       {showSeoPreview ? 'SEO Önizlemeyi Gizle' : 'SEO Önizlemeyi Göster'}
+                     </button>
+                     
+                     {showSeoPreview && (
+                       <div className="mt-3 p-4 border border-border rounded-md bg-background">
+                         <div className="text-primary text-base hover:underline">
+                           {metaTitle || title || 'Başlık'}
+                         </div>
+                         <div className="text-success text-xs">
+                           https://sata.com/blog/{slug || 'blog-yazisi-slug'}
+                         </div>
+                         <div className="text-sm text-foreground/80 mt-1">
+                           {metaDescription || excerpt || 'Meta açıklama burada görünecek. SEO için 150-160 karakter uzunluğunda bir açıklama yazmanız önerilir.'}
+                         </div>
+                       </div>
+                     )}
+                   </div>
+                 </CardContent>
+               </Card>
+             </div>
+           )}
+         </div>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div>
-                <label htmlFor="coverImage" className="block text-sm font-medium mb-1">
-                  Kapak Resmi
-                </label>
-                <input
-                  type="file"
-                  id="coverImage"
-                  ref={fileInputRef}
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleCoverImageChange}
-                />
-                
-                {coverImageUrl ? (
-                  <div className="relative mt-2">
-                    <NextImage
-                      src={coverImageUrl}
-                      alt="Kapak resmi önizleme"
-                      width={500}
-                      height={160}
-                      className="w-full h-40 object-cover rounded-md"
-                    />
-                    <button
-                      onClick={() => {
-                        setCoverImage(null);
-                        setCoverImageUrl('');
-                      }}
-                      className="absolute top-2 right-2 bg-background text-foreground p-1 rounded-full"
-                      type="button"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="outline"
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full h-40 flex flex-col items-center justify-center"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 mb-2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                    </svg>
-                    Kapak Resmi Ekle
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
+         <Card>
+           <CardContent className="pt-6">
+             <div>
+               <label htmlFor="coverImage" className="block text-sm font-medium mb-1">
+                 Kapak Resmi
+               </label>
+               <input
+                 type="file"
+                 id="coverImage"
+                 ref={fileInputRef}
+                 accept="image/*"
+                 className="hidden"
+                 onChange={handleCoverImageChange}
+               />
+               
+               {coverImageUrl ? (
+                 <div className="relative mt-2">
+                   <NextImage
+                     src={coverImageUrl}
+                     alt="Kapak resmi önizleme"
+                     width={500}
+                     height={160}
+                     className="w-full h-40 object-cover rounded-md"
+                   />
+                   <button
+                     onClick={() => {
+                       setCoverImage(null);
+                       setCoverImageUrl('');
+                     }}
+                     className="absolute top-2 right-2 bg-background text-foreground p-1 rounded-full"
+                     type="button"
+                   >
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                     </svg>
+                   </button>
+                 </div>
+               ) : (
+                 <Button
+                   variant="outline"
+                   type="button"
+                   onClick={() => fileInputRef.current?.click()}
+                   className="w-full h-40 flex flex-col items-center justify-center"
+                 >
+                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 mb-2">
+                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                   </svg>
+                   Kapak Resmi Ekle
+                 </Button>
+               )}
+             </div>
+           </CardContent>
+         </Card>
+       </div>
+     </div>
+   </div>
+ );
 };

@@ -9,11 +9,12 @@ import {
   deleteDocument,
   uploadFile
 } from '@/lib/firebase-service';
-import { BlogPost, BlogComment } from '@/types/blog';
+import { BlogPost, BlogComment, Category } from '@/types/blog';
 import { QueryDocumentSnapshot } from 'firebase/firestore';
 
 const BLOG_COLLECTION = 'blog_posts';
 const COMMENT_COLLECTION = 'blog_comments';
+const CATEGORY_COLLECTION = 'categories';
 
 // Slug oluşturma yardımcı fonksiyonu
 export const generateSlug = (title: string): string => {
@@ -101,12 +102,14 @@ export const getBlogPostBySlug = async (slug: string): Promise<BlogPost | null> 
 export const getBlogPosts = async ({
   status = 'published',
   tag = '',
+  categoryId = null,
   featured = false,
   perPage = 10,
   startAfterDoc = null
 }: {
   status?: 'published' | 'draft' | 'all';
   tag?: string;
+  categoryId?: string | null;
   featured?: boolean;
   page?: number;
   perPage?: number;
@@ -122,6 +125,11 @@ export const getBlogPosts = async ({
   // Etikete göre filtrele
   if (tag) {
     conditions.push({ field: 'tags', operator: 'array-contains', value: tag });
+  }
+  
+  // Kategoriye göre filtrele
+  if (categoryId) {
+    conditions.push({ field: 'categoryId', operator: '==', value: categoryId });
   }
   
   // Öne çıkanlara göre filtrele
@@ -256,4 +264,194 @@ export const uploadBlogImage = async (file: File, postId: string): Promise<strin
   const fileName = file.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
   const path = `blog_images/${postId}/content/${fileName}`;
   return uploadFile(path, file);
+};
+
+// Kategori Fonksiyonları //
+
+// Kategori oluşturma
+export const createCategory = async (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+  const timestamp = getServerTimestamp();
+  
+  // Slug yoksa isimden oluştur
+  if (!category.slug) {
+    category.slug = generateSlug(category.name);
+  }
+  
+  // Benzersiz bir ID oluştur
+  const docId = generateId(20);
+  
+  const newCategory: Category = {
+    ...category,
+    id: docId,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    parentId: category.parentId || null,
+    order: category.order || 0
+  };
+  
+  await setDocument(CATEGORY_COLLECTION, docId, newCategory);
+  return docId;
+};
+
+// Kategori güncelleme
+export const updateCategory = async (id: string, category: Partial<Category>): Promise<void> => {
+  const timestamp = getServerTimestamp();
+  
+  // İsim değiştiyse ve slug özellikle değiştirilmediyse, yeni slug oluştur
+  if (category.name && !category.slug) {
+    category.slug = generateSlug(category.name);
+  }
+  
+  await updateDocument(CATEGORY_COLLECTION, id, {
+    ...category,
+    updatedAt: timestamp
+  });
+};
+
+// Kategori silme
+export const deleteCategory = async (id: string): Promise<void> => {
+  // Önce bu kategoriye ait blog yazılarını kontrol et
+  // Eğer blog yazıları varsa onları uncategorized yapabilir veya hata döndürebilirsiniz
+  const posts = await queryCollection<BlogPost>({
+    collectionPath: BLOG_COLLECTION,
+    conditions: [{ field: 'categoryId', operator: '==', value: id }],
+    limitCount: 1
+  });
+  
+  if (posts.data.length > 0) {
+    throw new Error('Bu kategori blog yazıları tarafından kullanılıyor. Önce blog yazılarını başka bir kategoriye taşıyın.');
+  }
+  
+  // Alt kategorileri kontrol et
+  const subCategories = await queryCollection<Category>({
+    collectionPath: CATEGORY_COLLECTION,
+    conditions: [{ field: 'parentId', operator: '==', value: id }],
+    limitCount: 1
+  });
+  
+  if (subCategories.data.length > 0) {
+    throw new Error('Bu kategorinin alt kategorileri bulunuyor. Önce alt kategorileri silin veya başka bir kategoriye taşıyın.');
+  }
+  
+  // Kategoriyi sil
+  await deleteDocument(CATEGORY_COLLECTION, id);
+};
+
+// Kategoriyi ID ile alma
+export const getCategoryById = async (id: string): Promise<Category | null> => {
+  return getDocument<Category>(CATEGORY_COLLECTION, id);
+};
+
+// Kategoriyi slug ile alma
+export const getCategoryBySlug = async (slug: string): Promise<Category | null> => {
+  const result = await queryCollection<Category>({
+    collectionPath: CATEGORY_COLLECTION,
+    conditions: [{ field: 'slug', operator: '==', value: slug }],
+    limitCount: 1
+  });
+  
+  return result.data.length > 0 ? result.data[0] : null;
+};
+
+// Tüm kategorileri listeleme
+export const getCategories = async (parentId?: string | null): Promise<Category[]> => {
+  const conditions = [];
+  
+  // Eğer parentId belirtilmişse, sadece belirli bir kategorinin alt kategorilerini getir
+  if (parentId !== undefined) {
+    conditions.push({
+      field: 'parentId',
+      operator: '==',
+      value: parentId
+    });
+  }
+  
+  const result = await queryCollection<Category>({
+    collectionPath: CATEGORY_COLLECTION,
+    conditions,
+    orderByField: 'order',
+    orderDirection: 'asc',
+    limitCount: 100
+  });
+  
+  return result.data;
+};
+
+// Hiyerarşik kategorileri alma
+export const getCategoryHierarchy = async (): Promise<Category[]> => {
+  // Tüm kategorileri getir
+  const allCategories = await getCategories(undefined);
+  
+  // Kategorileri parentId'ye göre grupla
+  const categoriesByParent: Record<string, Category[]> = {};
+  
+  allCategories.forEach(category => {
+    const parentId = category.parentId || 'root';
+    if (!categoriesByParent[parentId]) {
+      categoriesByParent[parentId] = [];
+    }
+    categoriesByParent[parentId].push(category);
+  });
+  
+  // Sıralanmış kök kategoriler
+  return categoriesByParent['root'] || [];
+};
+
+// Belirli bir kategorinin alt kategorilerini alma
+export const getSubCategories = async (categoryId: string): Promise<Category[]> => {
+  return getCategories(categoryId);
+};
+
+// Blog yazısının kategorisini ayarlama
+export const setCategoryForPost = async (postId: string, categoryId: string | null): Promise<void> => {
+  await updateDocument<BlogPost>(BLOG_COLLECTION, postId, {
+    categoryId
+  });
+};
+
+// Belirli bir kategorideki blog yazılarını alma
+export const getBlogPostsByCategory = async (
+  categoryId: string,
+  options: {
+    status?: 'published' | 'draft' | 'all';
+    perPage?: number;
+    startAfterDoc?: QueryDocumentSnapshot<BlogPost> | null;
+  } = {}
+): Promise<{ posts: BlogPost[]; lastDoc: QueryDocumentSnapshot<BlogPost> | null; hasMore: boolean }> => {
+  const { status = 'published', perPage = 10, startAfterDoc = null } = options;
+  
+  const conditions = [
+    { field: 'categoryId', operator: '==', value: categoryId }
+  ];
+  
+  if (status !== 'all') {
+    conditions.push({ field: 'status', operator: '==', value: status });
+  }
+  
+  const result = await queryCollection<BlogPost>({
+    collectionPath: BLOG_COLLECTION,
+    conditions,
+    orderByField: 'publishedAt',
+    orderDirection: 'desc',
+    limitCount: perPage,
+    startAfterDoc
+  });
+  
+  // Daha fazla veri olup olmadığını kontrol et
+  const nextPageResult = result.lastDoc 
+    ? await queryCollection<BlogPost>({
+        collectionPath: BLOG_COLLECTION,
+        conditions,
+        orderByField: 'publishedAt',
+        orderDirection: 'desc',
+        limitCount: 1,
+        startAfterDoc: result.lastDoc
+      })
+    : { data: [] };
+  
+  return {
+    posts: result.data,
+    lastDoc: result.lastDoc,
+    hasMore: nextPageResult.data.length > 0
+  };
 };

@@ -8,6 +8,8 @@ export interface BlogPost {
     excerpt: string;
     coverImage?: string | null;
     tags: string[];
+    // Kategori referansı ekliyoruz
+    categoryId?: string | null;
     author: {
       id: string;
       name: string;
@@ -18,9 +20,9 @@ export interface BlogPost {
     status: 'draft' | 'published';
     viewCount: number;
     featured: boolean;
-  }
+}
   
-  export interface BlogComment {
+export interface BlogComment {
     id?: string;
     postId: string;
     author: {
@@ -32,4 +34,20 @@ export interface BlogPost {
     createdAt: number; // Unix timestamp
     parentId?: string;
     status: 'pending' | 'approved' | 'rejected';
-  }
+}
+
+// Yeni eklediğimiz Kategori tipi
+export interface Category {
+    id?: string;
+    name: string;
+    slug: string;
+    description?: string;
+    parentId?: string | null; // Hiyerarşik kategoriler için
+    order?: number; // Sıralama için
+    createdAt: number;
+    updatedAt: number;
+    // İsteğe bağlı özellikler
+    icon?: string | null;
+    color?: string | null;
+    postCount?: number; // İstatistik amaçlı (hesaplanabilir değer)
+}
