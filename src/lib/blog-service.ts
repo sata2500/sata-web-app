@@ -455,3 +455,69 @@ export const getBlogPostsByCategory = async (
     hasMore: nextPageResult.data.length > 0
   };
 };
+
+// İstatistikleri getiren fonksiyon
+export const getBlogStats = async (): Promise<{
+  totalPosts: number;
+  publishedPosts: number;
+  draftPosts: number;
+  totalComments: number;
+  pendingComments: number;
+  totalCategories: number;
+  totalTags: number;
+  totalViews: number;
+}> => {
+  try {
+    // Tüm blog yazılarını getir (statüye göre filtrelemeden)
+    const allPosts = await queryCollection<BlogPost>({
+      collectionPath: BLOG_COLLECTION,
+      limitCount: 1000,
+    });
+    
+    // Yayınlanan blog yazılarını getir
+    const publishedPosts = allPosts.data.filter(post => post.status === 'published');
+    
+    // Taslak blog yazılarını getir
+    const draftPosts = allPosts.data.filter(post => post.status === 'draft');
+    
+    // Toplam görüntülenme sayısı
+    const totalViews = allPosts.data.reduce((sum, post) => sum + (post.viewCount || 0), 0);
+    
+    // Tüm yorumları getir
+    const allComments = await getComments();
+    
+    // Onay bekleyen yorumlar
+    const pendingComments = allComments.filter(comment => comment.status === 'pending');
+    
+    // Tüm kategorileri getir
+    const allCategories = await getCategories();
+    
+    // Tüm etiketleri getir
+    const allTags = await getBlogTags();
+    
+    return {
+      totalPosts: allPosts.data.length,
+      publishedPosts: publishedPosts.length,
+      draftPosts: draftPosts.length,
+      totalComments: allComments.length,
+      pendingComments: pendingComments.length,
+      totalCategories: allCategories.length,
+      totalTags: allTags.length,
+      totalViews: totalViews
+    };
+  } catch (error) {
+    console.error('Blog istatistikleri getirilirken hata oluştu:', error);
+    
+    // Hata durumunda varsayılan değerler döndür
+    return {
+      totalPosts: 0,
+      publishedPosts: 0,
+      draftPosts: 0,
+      totalComments: 0,
+      pendingComments: 0,
+      totalCategories: 0,
+      totalTags: 0,
+      totalViews: 0
+    };
+  }
+};
