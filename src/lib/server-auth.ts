@@ -1,3 +1,7 @@
+// src/lib/server-auth.ts
+// Node.js runtime'ı kullanacağımızı belirt
+export const runtime = 'nodejs';
+
 import { cookies } from 'next/headers';
 import { getAuth } from 'firebase-admin/auth';
 import { adminApp } from '@/lib/firebase-admin';
@@ -42,4 +46,4 @@ export async function auth(): Promise<{ user: UserAuth | null }> {
       console.error('Oturum doğrulama hatası:', error);
       return { user: null };
     }
-  }
+}

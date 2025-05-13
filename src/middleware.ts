@@ -1,4 +1,6 @@
 // src/middleware.ts
+// Node.js runtime'ı kullanacağımızı belirt
+export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';

@@ -1,3 +1,7 @@
+// src/lib/firebase-admin.ts
+// Node.js runtime'ı kullanacağımızı belirt
+export const runtime = 'nodejs';
+
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 
 const FIREBASE_ADMIN_CONFIG = {
