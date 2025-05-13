@@ -5,23 +5,25 @@ import { Card } from '@/components/ui/card';
 import { SearchResults } from '@/components/search/search-results';
 import { SearchBar } from '@/components/search/search-bar';
 
-// Doğru tip tanımı için, NextJS 15 ile uyumlu olarak değiştirildi
-interface SearchPageProps {
-  params: Record<string, never>; // Empty object yerine Record<string, never> kullanıyoruz
-  searchParams: { [key: string]: string | string[] | undefined };
-}
-
 export const metadata = {
   title: 'Arama Sonuçları - SaTA',
   description: 'SaTA platformunda arama yapın ve içerikleri keşfedin.',
 };
 
-export default function SearchPage({ searchParams }: SearchPageProps) {
+// Next.js 15 formatına uygun şekilde searchParams tipini Promise olarak tanımlıyoruz
+interface SearchPageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function SearchPage({ searchParams }: SearchPageProps) {
+  // Promise'i await ile çözümleme
+  const resolvedParams = await searchParams;
+  
   // Sorgu parametresini işle (dizi ise ilk elemanı al, yoksa boş string kullan)
-  const query = typeof searchParams.q === 'string' 
-    ? searchParams.q 
-    : Array.isArray(searchParams.q) && searchParams.q.length > 0 
-      ? searchParams.q[0] 
+  const query = typeof resolvedParams.q === 'string' 
+    ? resolvedParams.q 
+    : Array.isArray(resolvedParams.q) && resolvedParams.q.length > 0 
+      ? resolvedParams.q[0] 
       : '';
   
   return (
