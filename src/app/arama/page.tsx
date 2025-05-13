@@ -5,8 +5,10 @@ import { Card } from '@/components/ui/card';
 import { SearchResults } from '@/components/search/search-results';
 import { SearchBar } from '@/components/search/search-bar';
 
+// Doğru tip tanımı için, NextJS 15 ile uyumlu olarak değiştirildi
 interface SearchPageProps {
-  searchParams: { q?: string };
+  params: Record<string, never>; // Empty object yerine Record<string, never> kullanıyoruz
+  searchParams: { [key: string]: string | string[] | undefined };
 }
 
 export const metadata = {
@@ -15,7 +17,12 @@ export const metadata = {
 };
 
 export default function SearchPage({ searchParams }: SearchPageProps) {
-  const query = searchParams.q || '';
+  // Sorgu parametresini işle (dizi ise ilk elemanı al, yoksa boş string kullan)
+  const query = typeof searchParams.q === 'string' 
+    ? searchParams.q 
+    : Array.isArray(searchParams.q) && searchParams.q.length > 0 
+      ? searchParams.q[0] 
+      : '';
   
   return (
     <Container className="py-8">

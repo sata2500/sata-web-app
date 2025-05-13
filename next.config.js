@@ -7,8 +7,10 @@ const nextConfig = {
       'lh3.googleusercontent.com',
     ],
   },
-  // nodeMiddleware yerine runtime='nodejs' kullanılacak
-  // experimental bölümünü tamamen kaldırıyoruz
+  experimental: {
+    // Next.js canary sürümünde bile bu ayarı açıkça belirtmek gerekiyor
+    nodeMiddleware: true,
+  },
   transpilePackages: ['firebase-admin'],
   webpack: (config, { isServer }) => {
     // Node.js modüllerini daha iyi ele almak için
