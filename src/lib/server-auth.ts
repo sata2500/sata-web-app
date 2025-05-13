@@ -1,5 +1,5 @@
 // src/lib/server-auth.ts
-// Node.js runtime'ı kullanacağımızı belirt
+// Node.js runtime kullanımını belirt
 export const runtime = 'nodejs';
 
 import { cookies } from 'next/headers';

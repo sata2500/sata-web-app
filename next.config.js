@@ -1,4 +1,3 @@
-// next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -9,13 +8,9 @@ const nextConfig = {
     ],
   },
   experimental: {
-    clientInstrumentationHook: true,
-    serverComponentsExternalPackages: ['firebase-admin'],
+    // Node.js Middleware desteği için
+    nodeMiddleware: true,
   },
-  // Node.js runtime kullanımını etkinleştir
-  // Ana nesne seviyesinde belirlenir
-  runtime: 'nodejs',
-  // Firebase Admin SDK'nın daha iyi çalışması için transpilePackages
   transpilePackages: ['firebase-admin'],
   // webpack ayarlarını özelleştirme
   webpack: (config, { isServer }) => {

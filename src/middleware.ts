@@ -1,5 +1,5 @@
 // src/middleware.ts
-// Node.js runtime'ı kullanacağımızı belirt
+// Node.js runtime kullanımını belirt
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
