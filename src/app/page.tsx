@@ -16,7 +16,19 @@ export const metadata: Metadata = createMetadata({
 export default function HomePage() {
   return (
     <>
-      <SchemaMarkup type="website" />
+      <SchemaMarkup 
+        type="website" 
+        data={{
+          name: 'SaTA',
+          url: 'https://sata.com',
+          description: 'SaTA, blog ve çeşitli uygulamalar sunan modern bir web platformudur.',
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: 'https://sata.com/arama?q={search_term_string}',
+            'query-input': 'required name=search_term_string'
+          }
+        }}
+      />
       
       {/* Hero Slider */}
       <HeroSlider />

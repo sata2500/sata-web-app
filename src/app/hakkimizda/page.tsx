@@ -12,7 +12,22 @@ export const metadata: Metadata = createMetadata({
 export default function AboutPage() {
   return (
     <>
-      <SchemaMarkup type="organization" />
+      <SchemaMarkup 
+        type="organization" 
+        data={{
+          name: 'SaTA',
+          url: 'https://sata.com',
+          description: 'SaTA, teknoloji ve eğitim alanında yenilikçi çözümler sunmayı hedefleyen bir web platformudur.',
+          logo: {
+            '@type': 'ImageObject',
+            url: 'https://sata.com/images/logo.svg'
+          },
+          email: 'info@sata.com.tr',
+          sameAs: [
+            'https://github.com/sata-project'
+          ]
+        }}
+      />
       
       <Container>
         <div className="py-12 max-w-3xl mx-auto">

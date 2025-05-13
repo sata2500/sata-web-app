@@ -13,7 +13,18 @@ export const metadata: Metadata = createMetadata({
 export default function ContactPage() {
   return (
     <>
-      <SchemaMarkup type="website" />
+      <SchemaMarkup 
+        type="website" 
+        data={{
+          name: 'SaTA İletişim',
+          url: 'https://sata.com/iletisim',
+          description: 'SaTA ekibi ile iletişime geçin, sorularınızı sorun veya önerilerinizi paylaşın.',
+          potentialAction: {
+            '@type': 'ContactAction',
+            name: 'İletişime Geç'
+          }
+        }}
+      />
       
       <Container>
         <div className="py-12">
