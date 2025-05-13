@@ -6,11 +6,12 @@ import { Metadata } from 'next';
 export const siteConfig = {
   name: 'SaTA',
   description: 'Modern Web Geliştirme ve Öğrenme Platformu',
-  url: 'https://sata.com',
-  ogImage: 'https://sata.com/images/og-image.jpg',
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://sata.com',
+  ogImage: '/images/og-image.jpg',
   links: {
     github: 'https://github.com/sata-project',
     twitter: 'https://twitter.com/sata_project',
+    linkedin: 'https://linkedin.com/company/sata-project',
   },
 };
 
@@ -21,17 +22,23 @@ export function createMetadata({
   path = '',
   ogImage,
   noIndex = false,
+  type = 'website', // type parametresini ekliyoruz (article veya website)
 }: {
   title?: string;
   description?: string;
   path?: string;
   ogImage?: string | null;
   noIndex?: boolean;
+  type?: 'website' | 'article'; // İçerik türünü belirtmek için
 }): Metadata {
   const fullTitle = title ? `${title} | ${siteConfig.name}` : siteConfig.name;
   const fullDescription = description || siteConfig.description;
   const url = `${siteConfig.url}${path}`;
-  const ogImageUrl = ogImage || siteConfig.ogImage;
+  const ogImageUrl = ogImage
+    ? ogImage.startsWith('http')
+      ? ogImage
+      : `${siteConfig.url}${ogImage}`
+    : `${siteConfig.url}${siteConfig.ogImage}`;
 
   return {
     title: fullTitle,
@@ -44,7 +51,7 @@ export function createMetadata({
     },
     robots: noIndex ? 'noindex, nofollow' : 'index, follow',
     openGraph: {
-      type: 'website',
+      type, // 'website' veya 'article' olabilir
       locale: 'tr_TR',
       url,
       title: fullTitle,
@@ -66,5 +73,19 @@ export function createMetadata({
       images: [ogImageUrl],
       creator: '@sata_project',
     },
+  };
+}
+
+// Site bilgilerini al - Schema.org için kullanılabilir
+export function getSiteInfo() {
+  return {
+    siteName: siteConfig.name,
+    siteUrl: siteConfig.url,
+    logo: `${siteConfig.url}/images/logo.svg`,
+    socialProfiles: [
+      siteConfig.links.twitter,
+      siteConfig.links.github,
+      siteConfig.links.linkedin,
+    ],
   };
 }

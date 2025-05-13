@@ -1,5 +1,4 @@
 // src/app/sitemap.ts
-
 import { MetadataRoute } from 'next';
 import { getBlogPosts } from '@/lib/blog-service';
 
@@ -10,29 +9,32 @@ interface Route {
   priority?: number;
 }
 
+// Site URL'sini tanımla
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sata.com';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Site ana rota bilgileri
   const routes: Route[] = [
     {
-      url: 'https://sata.com',
+      url: `${siteUrl}`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 1.0,
     },
     {
-      url: 'https://sata.com/blog',
+      url: `${siteUrl}/blog`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
-      url: 'https://sata.com/hakkimizda',
+      url: `${siteUrl}/hakkimizda`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
-      url: 'https://sata.com/iletisim',
+      url: `${siteUrl}/iletisim`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.6,
@@ -47,7 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Blog yazılarını sitemap'e ekle
   const blogRoutes = result.posts.map((post) => ({
-    url: `https://sata.com/blog/${post.slug}`,
+    url: `${siteUrl}/blog/${post.slug}`,
     lastModified: new Date(post.updatedAt),
     changeFrequency: 'weekly' as const,
     priority: post.featured ? 0.8 : 0.7,

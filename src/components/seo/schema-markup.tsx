@@ -1,107 +1,147 @@
 // src/components/seo/schema-markup.tsx
-'use client';
-import { usePathname } from 'next/navigation';
-import Script from 'next/script';
-import { BlogPost } from '@/types/blog';
-import { siteConfig } from '@/app/metadata';
+import React from 'react';
 
-// TypeScript tip tanımlamaları
-// Schema için genel bir tip tanımı
-type JsonLdSchema = Record<string, unknown>;
+// Blog yazısı tipi tanımı
+interface BlogPostData {
+  title: string;
+  slug: string;
+  excerpt?: string;
+  content: string;
+  coverImage?: string;
+  publishedAt: number;
+  updatedAt: number;
+  author: {
+    name: string;
+    avatar?: string;
+  };
+  featured?: boolean;
+  tags: string[];
+}
 
-// Blog için veri türü
-interface BlogData {
-  description?: string;
-  // Diğer blog özellikleri buraya eklenebilir
+// Breadcrumb öğe tip tanımı
+interface BreadcrumbItem {
+  name: string;
+  url: string;
 }
 
 interface SchemaMarkupProps {
-  type: 'website' | 'blog' | 'blogPost' | 'organization';
-  // any yerine specific union type kullanıyoruz
-  data?: BlogData | BlogPost;
+  type: 'blogPost' | 'website' | 'organization' | 'breadcrumb';
+  data: BlogPostData | BreadcrumbItem[] | Record<string, unknown>;
 }
 
-export const SchemaMarkup: React.FC<SchemaMarkupProps> = ({ type, data }) => {
-  const pathname = usePathname();
-  const url = `${siteConfig.url}${pathname}`;
-  
-  // any yerine JsonLdSchema tipi kullanıyoruz
-  let schema: JsonLdSchema | null = null;
-  
-  switch (type) {
-    case 'website':
-      schema = {
-        '@context': 'https://schema.org',
-        '@type': 'WebSite',
-        url,
-        name: siteConfig.name,
-        description: siteConfig.description,
-      };
-      break;
-    
-    case 'blog':
-      schema = {
-        '@context': 'https://schema.org',
-        '@type': 'Blog',
-        url,
-        name: `${siteConfig.name} Blog`,
-        description: (data as BlogData)?.description || 'Blog yazıları ve makaleler',
-      };
-      break;
-    
-    case 'blogPost':
-      const post = data as BlogPost;
-      schema = {
-        '@context': 'https://schema.org',
-        '@type': 'BlogPosting',
-        headline: post.title,
-        description: post.excerpt,
-        datePublished: new Date(post.publishedAt).toISOString(),
-        dateModified: new Date(post.updatedAt).toISOString(),
-        image: post.coverImage || siteConfig.ogImage,
-        author: {
-          '@type': 'Person',
-          name: post.author.name,
-        },
-        publisher: {
-          '@type': 'Organization',
-          name: siteConfig.name,
-          logo: {
-            '@type': 'ImageObject',
-            url: `${siteConfig.url}/images/logo.svg`,
-          },
-        },
-        mainEntityOfPage: {
-          '@type': 'WebPage',
-          '@id': url,
-        },
-        keywords: post.tags.join(', '),
-      };
-      break;
-    
-    case 'organization':
-      schema = {
-        '@context': 'https://schema.org',
-        '@type': 'Organization',
-        url: siteConfig.url,
-        name: siteConfig.name,
-        description: siteConfig.description,
-        logo: `${siteConfig.url}/images/logo.svg`,
-        sameAs: [
-          siteConfig.links.github,
-          siteConfig.links.twitter,
-        ],
-      };
-      break;
-  }
-  
-  if (!schema) return null;
-  
+export function WebsiteSchema({ siteUrl, siteName }: { siteUrl: string, siteName: string }) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${siteUrl}/#website`,
+    url: siteUrl,
+    name: siteName,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${siteUrl}/arama?q={search_term_string}`,
+      'query-input': 'required name=search_term_string'
+    }
+  };
+
   return (
-    <Script
-      id={`schema-${type}`}
+    <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
     />
   );
-};
+}
+
+export function OrganizationSchema({
+  siteUrl,
+  siteName,
+  logo = '',
+  socialProfiles = []
+}: {
+  siteUrl: string,
+  siteName: string,
+  logo?: string,
+  socialProfiles?: string[]
+}) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': `${siteUrl}/#organization`,
+    url: siteUrl,
+    name: siteName,
+    ...(logo && { logo: logo }),
+    ...(socialProfiles.length > 0 && { sameAs: socialProfiles })
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+export function SchemaMarkup({ type, data }: SchemaMarkupProps) {
+  let schema: Record<string, unknown> = {};
+
+  switch (type) {
+    case 'blogPost':
+      const blogData = data as BlogPostData;
+      schema = {
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: blogData.title,
+        description: blogData.excerpt || '',
+        image: blogData.coverImage || '',
+        datePublished: new Date(blogData.publishedAt).toISOString(),
+        dateModified: new Date(blogData.updatedAt).toISOString(),
+        author: {
+          '@type': 'Person',
+          name: blogData.author.name
+        },
+        publisher: {
+          '@type': 'Organization',
+          name: 'SaTA',
+          logo: {
+            '@type': 'ImageObject',
+            url: 'https://sata.com/images/logo.svg'
+          }
+        },
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': `https://sata.com/blog/${blogData.slug}`
+        }
+      };
+      break;
+
+    case 'breadcrumb':
+      const breadcrumbData = data as BreadcrumbItem[];
+      schema = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: breadcrumbData.map((item, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          item: {
+            '@id': item.url,
+            name: item.name
+          }
+        }))
+      };
+      break;
+
+    default:
+      schema = {
+        '@context': 'https://schema.org',
+        '@type': type === 'website' ? 'WebSite' : type === 'organization' ? 'Organization' : 'Thing',
+        name: 'SaTA',
+        url: 'https://sata.com'
+      };
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}

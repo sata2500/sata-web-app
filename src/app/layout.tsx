@@ -1,9 +1,11 @@
+// src/app/layout.tsx
 import type { Metadata } from 'next';
 import { Inter, Poppins } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
+import { WebsiteSchema, OrganizationSchema } from '@/components/seo/schema-markup';
 
 // Font tanımları
 const inter = Inter({ 
@@ -19,9 +21,62 @@ const poppins = Poppins({
   display: 'swap'
 });
 
-export const metadata: Metadata = {
-  title: 'SaTA - Modern Blog ve Öğrenme Platformu',
+// Site bilgileri
+const siteConfig = {
+  name: 'SaTA',
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://sata.com',
   description: 'SaTA, blog ve çeşitli uygulamalar sunan modern bir web platformudur.',
+  logo: '/images/logo.svg',
+  socialProfiles: {
+    twitter: 'sataweb',
+    github: 'sataweb',
+    linkedin: 'company/sataweb'
+  }
+};
+
+export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
+  title: {
+    default: `${siteConfig.name} - Modern Blog ve Öğrenme Platformu`,
+    template: `%s - ${siteConfig.name}`
+  },
+  description: siteConfig.description,
+  keywords: ['blog', 'eğitim', 'öğrenme', 'web', 'platform', 'SaTA'],
+  authors: [{ name: siteConfig.name, url: siteConfig.url }],
+  creator: siteConfig.name,
+  openGraph: {
+    type: 'website',
+    locale: 'tr_TR',
+    url: '/',
+    siteName: siteConfig.name,
+    title: `${siteConfig.name} - Modern Blog ve Öğrenme Platformu`,
+    description: siteConfig.description,
+    images: [
+      {
+        url: '/images/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: siteConfig.name
+      }
+    ]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: `${siteConfig.name} - Modern Blog ve Öğrenme Platformu`,
+    description: siteConfig.description,
+    images: ['/images/og-image.jpg'],
+    creator: `@${siteConfig.socialProfiles.twitter}`
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION,
+    yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION
+  },
+  alternates: {
+    canonical: '/',
+    languages: {
+      'tr-TR': '/'
+    }
+  }
 };
 
 export default function RootLayout({
@@ -54,6 +109,19 @@ export default function RootLayout({
               })();
             `,
           }}
+        />
+        
+        {/* Schema.org yapısal verileri */}
+        <WebsiteSchema siteUrl={siteConfig.url} siteName={siteConfig.name} />
+        <OrganizationSchema 
+          siteUrl={siteConfig.url} 
+          siteName={siteConfig.name} 
+          logo={`${siteConfig.url}${siteConfig.logo}`}
+          socialProfiles={[
+            `https://twitter.com/${siteConfig.socialProfiles.twitter}`,
+            `https://github.com/${siteConfig.socialProfiles.github}`,
+            `https://www.linkedin.com/${siteConfig.socialProfiles.linkedin}`
+          ]}
         />
       </head>
       <body className={`${inter.variable} ${poppins.variable}`}>
