@@ -1,6 +1,7 @@
 // src/types/blog.ts
 
-export interface BlogPost {
+// interface yerine type kullanacağız
+export type BlogPost = {
     id?: string;
     title: string;
     slug: string;
@@ -8,7 +9,7 @@ export interface BlogPost {
     excerpt: string;
     coverImage?: string | null;
     tags: string[];
-    // Kategori referansı ekliyoruz
+    // Kategori referansı
     categoryId?: string | null;
     author: {
       id: string;
@@ -36,7 +37,7 @@ export interface BlogComment {
     status: 'pending' | 'approved' | 'rejected';
 }
 
-// Yeni eklediğimiz Kategori tipi
+// Kategori tipi
 export interface Category {
     id?: string;
     name: string;
