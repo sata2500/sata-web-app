@@ -1,3 +1,4 @@
+// src/app/blog/[slug]/page.tsx
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
@@ -7,6 +8,8 @@ import { Container } from '@/components/ui/container';
 import { Badge } from '@/components/ui/badge';
 import { CommentSection } from '@/components/blog/comment-section';
 import { SchemaMarkup } from '@/components/seo/schema-markup';
+import { BlogViewTracker } from '@/components/blog/blog-view-tracker';
+import { InteractionBar } from '@/components/interactions/interaction-bar';
 import { getBlogPostBySlug } from '@/lib/blog-service';
 import { createMetadata } from '@/app/metadata';
 
@@ -57,6 +60,7 @@ export default async function BlogPostPage({
   return (
     <>
       <SchemaMarkup type="blogPost" data={post} />
+      <BlogViewTracker postId={post.id as string} />
       <Container>
         <article className="max-w-3xl mx-auto py-12">
           {/* Başlık ve meta bilgiler */}
@@ -69,7 +73,7 @@ export default async function BlogPostPage({
               ))}
             </div>
             <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {post.author.avatar ? (
                   <Image
@@ -96,6 +100,16 @@ export default async function BlogPostPage({
                   </div>
                 </div>
               </div>
+              
+              {/* Etkileşim çubuğu */}
+              <InteractionBar 
+                contentId={post.id as string}
+                contentType="blog_post"
+                contentTitle={post.title}
+                contentUrl={`/blog/${post.slug}`}
+                variant="horizontal"
+                size="md"
+              />
             </div>
           </header>
           
@@ -115,9 +129,24 @@ export default async function BlogPostPage({
           
           {/* İçerik */}
           <div
-            className="prose prose-lg max-w-none dark:prose-invert"
+            className="prose prose-lg max-w-none dark:prose-invert mb-10"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
+          
+          {/* Etkileşim çubuğu (alt) */}
+          <div className="border-t border-b py-6 my-8">
+            <div className="flex items-center justify-between">
+              <div className="text-xl font-medium">Bu yazıyı beğendiniz mi?</div>
+              <InteractionBar 
+                contentId={post.id as string}
+                contentType="blog_post"
+                contentTitle={post.title}
+                contentUrl={`/blog/${post.slug}`}
+                variant="horizontal"
+                size="lg"
+              />
+            </div>
+          </div>
           
           {/* Yorumlar */}
           <CommentSection postId={post.id as string} />

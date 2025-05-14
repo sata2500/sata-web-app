@@ -52,3 +52,21 @@ export interface Category {
     color?: string | null;
     postCount?: number; // İstatistik amaçlı (hesaplanabilir değer)
 }
+
+// v1.3 için eklenen yeni türler
+export interface Interaction {
+    id?: string;
+    userId: string;
+    contentId: string;
+    contentType: 'blog_post' | 'comment';
+    interactionType: 'like' | 'save' | 'view' | 'share';
+    createdAt: number; // Unix timestamp
+    updatedAt?: number; // Unix timestamp
+}
+
+export interface InteractionStats {
+    likeCount: number;
+    saveCount: number;
+    viewCount: number;
+    shareCount: number;
+}

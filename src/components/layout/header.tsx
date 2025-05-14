@@ -10,6 +10,7 @@ import { ThemeSwitch } from '@/components/theme-switch';
 import { Container } from '@/components/ui/container';
 import { AdminOnly } from '@/components/ui/authorization';
 import { SearchBar } from '@/components/search/search-bar';
+import { NotificationBell } from '@/components/notifications/notification-bell';
 
 export const Header = () => {
   const { user, loading, signOut } = useAuth();
@@ -75,6 +76,9 @@ export const Header = () => {
           {/* Right Section */}
           <div className="flex items-center space-x-4">
             <ThemeSwitch />
+            
+            {/* Bildirim Zili - Giriş yapmış kullanıcılar için */}
+            {!loading && user && <NotificationBell />}
             
             {/* User Menu / Auth Buttons */}
             {!loading && (
@@ -182,6 +186,14 @@ export const Header = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Profilim
+                  </Link>
+                  
+                  <Link
+                    href="/bildirimler"
+                    className="text-foreground/70 hover:text-foreground"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Bildirimler
                   </Link>
                   
                   {/* Admin Linki - AdminOnly bileşeniyle izin kontrolü */}
