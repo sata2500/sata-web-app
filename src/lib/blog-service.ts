@@ -1,6 +1,6 @@
 // src/lib/blog-service.ts
 
-import { getServerTimestamp, generateId } from '@/lib/utils';
+import { generateId } from '@/lib/utils';
 import { 
   getDocument, 
   setDocument, 
@@ -28,7 +28,7 @@ export const generateSlug = (title: string): string => {
 
 // Blog yazısı ekleme
 export const createBlogPost = async (blogPost: Omit<BlogPost, 'id' | 'publishedAt' | 'updatedAt' | 'viewCount'>): Promise<string> => {
-  const timestamp = getServerTimestamp();
+  const timestamp = Date.now(); // Unix timestamp olarak alınıyor
   
   // Slug yoksa başlıktan oluştur
   if (!blogPost.slug) {
@@ -55,7 +55,7 @@ export const createBlogPost = async (blogPost: Omit<BlogPost, 'id' | 'publishedA
 
 // Blog yazısı güncelleme
 export const updateBlogPost = async (id: string, blogPost: Partial<BlogPost>): Promise<void> => {
-  const timestamp = getServerTimestamp();
+  const timestamp = Date.now(); // Unix timestamp olarak alınıyor
   
   // Başlık değiştiyse ve slug özellikle değiştirilmediyse, yeni slug oluştur
   if (blogPost.title && !blogPost.slug) {
@@ -179,7 +179,7 @@ export const getBlogTags = async (): Promise<string[]> => {
 
 // Yorum ekleme
 export const createComment = async (comment: Omit<BlogComment, 'id' | 'createdAt'>): Promise<string> => {
-  const timestamp = getServerTimestamp();
+  const timestamp = Date.now(); // Unix timestamp olarak alınıyor
   
   // Benzersiz bir ID oluştur
   const commentId = generateId(20);
@@ -232,7 +232,7 @@ export const getCommentsByPostId = async (
   return result.data;
 };
 
-// Tüm yorumları listeleme (eklenen yeni fonksiyon)
+// Tüm yorumları listeleme
 export const getComments = async (
   status: 'all' | 'pending' | 'approved' | 'rejected' = 'all'
 ): Promise<BlogComment[]> => {
@@ -270,7 +270,7 @@ export const uploadBlogImage = async (file: File, postId: string): Promise<strin
 
 // Kategori oluşturma
 export const createCategory = async (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
-  const timestamp = getServerTimestamp();
+  const timestamp = Date.now(); // Unix timestamp olarak alınıyor
   
   // Slug yoksa isimden oluştur
   if (!category.slug) {
@@ -295,7 +295,7 @@ export const createCategory = async (category: Omit<Category, 'id' | 'createdAt'
 
 // Kategori güncelleme
 export const updateCategory = async (id: string, category: Partial<Category>): Promise<void> => {
-  const timestamp = getServerTimestamp();
+  const timestamp = Date.now(); // Unix timestamp olarak alınıyor
   
   // İsim değiştiyse ve slug özellikle değiştirilmediyse, yeni slug oluştur
   if (category.name && !category.slug) {

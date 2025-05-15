@@ -23,7 +23,6 @@ import {
 } from '@/lib/firebase-service';
 import { auth } from '@/config/firebase';
 import { UserProfile } from '@/types/user';
-import { getServerTimestamp } from '@/lib/utils';
 
 // Firebase hataları için özel tip tanımlaması
 interface FirebaseError extends Error {
@@ -35,7 +34,7 @@ const USER_COLLECTION = 'users';
 
 // Firebase kullanıcısından UserProfile oluşturma
 export const createUserProfileFromFirebaseUser = async (user: FirebaseUser): Promise<UserProfile> => {
-  const timestamp = getServerTimestamp();
+  const timestamp = Date.now(); // Unix timestamp olarak alınıyor
   
   const userProfile: UserProfile = {
     id: user.uid,
@@ -67,7 +66,7 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
 
 // Kullanıcı profili güncelleme
 export const updateUserProfile = async (userId: string, profile: Partial<UserProfile>): Promise<void> => {
-  const timestamp = getServerTimestamp();
+  const timestamp = Date.now(); // Unix timestamp olarak alınıyor
   
   await updateDocument(USER_COLLECTION, userId, {
     ...profile,
@@ -300,7 +299,7 @@ export const updateUserNotificationSettings = async (
     // Firestore'da kullanıcı ayarlarını güncelleyelim
     await updateDocument(USER_COLLECTION, userId, {
       notificationSettings: settings,
-      updatedAt: getServerTimestamp()
+      updatedAt: Date.now() // Unix timestamp olarak alınıyor
     });
   } catch (error) {
     console.error('Bildirim ayarları güncellenirken bir hata oluştu:', error);
