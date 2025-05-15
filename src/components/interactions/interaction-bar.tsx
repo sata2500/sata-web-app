@@ -6,6 +6,7 @@ import { getInteractionStats } from '@/lib/interaction-service';
 import { LikeButton } from './like-button';
 import { SaveButton } from './save-button';
 import { ShareButton } from './share-button';
+import { AddToCollectionButton } from '@/components/collections/add-to-collection-button';
 
 interface InteractionBarProps {
   contentId: string;
@@ -51,6 +52,9 @@ export function InteractionBar({
     ? `flex items-center gap-6 ${className}`
     : `flex flex-col gap-4 ${className}`;
     
+  // buttonVariant değişkenini kaldırdık, doğrudan "outline" kullanıyoruz
+  // Button boyutu için ise mevcut size değişkenini kullanıyoruz
+  
   return (
     <div className={containerClass}>
       <LikeButton
@@ -77,6 +81,14 @@ export function InteractionBar({
         initialCount={stats.shareCount}
         variant="icon"
         size={size}
+      />
+      
+      {/* Yeni: Koleksiyona Ekle butonu */}
+      <AddToCollectionButton
+        contentId={contentId}
+        contentType={contentType}
+        variant="outline"
+        size={size === 'lg' ? 'lg' : size === 'sm' ? 'sm' : 'sm'}
       />
       
       {stats.viewCount > 0 && (

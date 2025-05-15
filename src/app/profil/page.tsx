@@ -1,4 +1,4 @@
-// src/app/profil/page.tsx sayfasına takip önerilerini ekleyelim
+// src/app/profil/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,16 +10,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/auth-context';
 import { getUserNotificationSettings, updateUserNotificationSettings } from '@/lib/notification-service';
-import { getFollowStats } from '@/lib/follow-service'; // Yeni import
+import { getFollowStats } from '@/lib/follow-service';
 import { NotificationPreferences } from '@/types/notification';
-import { FollowSuggestions } from '@/components/follow/follow-suggestions'; // Yeni import
+import { FollowSuggestions } from '@/components/follow/follow-suggestions';
 
 export default function ProfilePage() {
   const router = useRouter();
   const { user, loading, userProfile } = useAuth();
   const [notificationSettings, setNotificationSettings] = useState<NotificationPreferences | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [followStats, setFollowStats] = useState({ followersCount: 0, followingCount: 0 }); // Yeni state
+  const [followStats, setFollowStats] = useState({ followersCount: 0, followingCount: 0 });
   
   // Kullanıcı giriş yapmış mı kontrol et
   useEffect(() => {
@@ -137,6 +137,10 @@ export default function ProfilePage() {
                   </Button>
                   <Button href="/profil/kaydedilenler" variant="outline" className="w-full">
                     Kaydedilen İçerikler
+                  </Button>
+                  {/* YENİ: Koleksiyonlar link'i */}
+                  <Button href="/profil/koleksiyonlar" variant="outline" className="w-full">
+                    Koleksiyonlarım
                   </Button>
                   <Button href="/bildirimler" variant="outline" className="w-full">
                     Bildirimlerim

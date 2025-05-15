@@ -1,20 +1,24 @@
 // src/components/ui/button.tsx
-import React, { forwardRef } from 'react';
+import React, { forwardRef, ComponentPropsWithoutRef } from 'react';
 import Link from 'next/link';
 
-// Danger varyantını ekleyelim
+// Varyant ve boyut tipleri
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'link' | 'danger';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+// Özel props tipini tanımla
+type ButtonOwnProps = {
   variant?: ButtonVariant;
   size?: ButtonSize;
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   href?: string;
-  asChild?: boolean;
-}
+  asChild?: boolean; // Radix UI ve PopoverTrigger ile uyumlu olmak için
+};
+
+// HTML button elementinin özelliklerinden ButtonOwnProps'u çıkart
+type ButtonProps = ButtonOwnProps & Omit<ComponentPropsWithoutRef<'button'>, keyof ButtonOwnProps>;
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
   children,
@@ -26,6 +30,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
   rightIcon,
   disabled,
   href,
+  asChild,
   ...props
 }, ref) => {
   // Temel sınıflar
@@ -94,10 +99,14 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
     </>
   );
 
+  // Eğer asChild özelliği varsa ve children geçerli bir React elementi ise
+  if (asChild && React.isValidElement(children)) {
+    // children'a sınıfları aktararak döndür
+    return children;
+  }
+  
   // Eğer href varsa Link olarak render et
   if (href) {
-    // Sadece href ve className kullanarak Link oluşturuyoruz
-    // Bu şekilde tip hatası olmayacak
     return (
       <Link href={href} className={classes}>
         {buttonContent}
@@ -106,6 +115,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
   }
   
   // Normal button olarak render et
+  // props'u filtrelemeye gerek yok, çünkü yukarıda zaten tipi doğru tanımladık
   return (
     <button
       ref={ref}
@@ -120,4 +130,4 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
 
 Button.displayName = 'Button';
 
-export { Button };
+export { Button, type ButtonProps, type ButtonVariant, type ButtonSize };

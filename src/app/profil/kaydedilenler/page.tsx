@@ -2,21 +2,38 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Container } from '@/components/ui/container';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { useAuth } from '@/context/auth-context';
 import { getUserSaves } from '@/lib/interaction-service';
 import { getBlogPostById } from '@/lib/blog-service';
+import { getUserCollections, getCollectionBlogPosts } from '@/lib/collection-service';
 import { BlogPost } from '@/types/blog';
+import { Collection } from '@/types/collection';
 import { formatRelativeTime } from '@/lib/utils';
+// Koleksiyona ekle butonunu import et
+import { AddToCollectionButton } from '@/components/collections/add-to-collection-button';
 
 export default function SavedContentPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const collectionId = searchParams.get('collection');
+  
   const { user, loading } = useAuth();
   const [savedPosts, setSavedPosts] = useState<BlogPost[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [selectedCollection, setSelectedCollection] = useState<string | null>(collectionId);
   const [isLoading, setIsLoading] = useState(true);
   
   // Kullanıcı giriş yapmış mı kontrol et
@@ -26,6 +43,24 @@ export default function SavedContentPage() {
     }
   }, [user, loading, router]);
   
+  // Koleksiyonları yükle
+  useEffect(() => {
+    const loadCollections = async () => {
+      if (!user) return;
+      
+      try {
+        const userCollections = await getUserCollections(user.id);
+        setCollections(userCollections);
+      } catch (error) {
+        console.error('Koleksiyonlar yüklenirken hata:', error);
+      }
+    };
+    
+    if (user) {
+      loadCollections();
+    }
+  }, [user]);
+  
   // Kaydedilen içerikleri yükle
   useEffect(() => {
     const loadSavedContent = async () => {
@@ -34,19 +69,22 @@ export default function SavedContentPage() {
       setIsLoading(true);
       
       try {
-        // Kullanıcının kaydettiği blog yazılarının ID'lerini al
-        const savedBlogIds = await getUserSaves(user.id, 'blog_post');
+        let posts: BlogPost[] = [];
         
-        // Her bir blog yazısının detaylarını al
-        const postPromises = savedBlogIds.map(id => getBlogPostById(id));
-        const posts = await Promise.all(postPromises);
+        if (selectedCollection) {
+          // Belirli bir koleksiyonun içeriğini yükle
+          posts = await getCollectionBlogPosts(selectedCollection);
+        } else {
+          // Tüm kaydedilen içerikleri yükle
+          const savedBlogIds = await getUserSaves(user.id, 'blog_post');
+          const postPromises = savedBlogIds.map(id => getBlogPostById(id));
+          
+          const allPosts = await Promise.all(postPromises);
+          posts = allPosts.filter((post): post is BlogPost => !!post)
+            .filter(post => post.status === 'published');
+        }
         
-        // null değerleri filtrele ve durumu "published" olanları al
-        const validPosts = posts
-          .filter((post): post is BlogPost => !!post)
-          .filter(post => post.status === 'published');
-        
-        setSavedPosts(validPosts);
+        setSavedPosts(posts);
       } catch (error) {
         console.error('Kaydedilen içerikler yüklenirken hata:', error);
       } finally {
@@ -57,7 +95,20 @@ export default function SavedContentPage() {
     if (user) {
       loadSavedContent();
     }
-  }, [user]);
+  }, [user, selectedCollection]);
+  
+  // Koleksiyon değişikliğinde URL'i güncelle
+  const handleCollectionChange = (value: string) => {
+    const newValue = value === 'all' ? null : value;
+    setSelectedCollection(newValue);
+    
+    // URL'i güncelle
+    if (newValue) {
+      router.push(`/profil/kaydedilenler?collection=${newValue}`);
+    } else {
+      router.push('/profil/kaydedilenler');
+    }
+  };
   
   // Kullanıcı giriş yapmadıysa veya yükleme yapılıyorsa gösterme
   if (loading || !user) {
@@ -70,6 +121,42 @@ export default function SavedContentPage() {
     );
   }
   
+  // Koleksiyon seçici oluştur
+  const renderCollectionSelector = () => (
+    <div className="mb-6">
+      <div className="flex items-center gap-3">
+        <div className="text-sm font-medium">Koleksiyon:</div>
+        <Select
+          value={selectedCollection || 'all'}
+          onValueChange={handleCollectionChange}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Tüm Kaydedilenler" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tüm Kaydedilenler</SelectItem>
+            {collections.map(collection => (
+              <SelectItem key={collection.id} value={collection.id as string}>
+                {collection.name}
+                {collection.isPrivate && ' (Özel)'}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        
+        <Button 
+          variant="outline" 
+          size="sm"
+          asChild
+        >
+          <Link href="/profil/koleksiyonlar">
+            Koleksiyonlarımı Yönet
+          </Link>
+        </Button>
+      </div>
+    </div>
+  );
+  
   return (
     <Container>
       <div className="py-12">
@@ -79,6 +166,8 @@ export default function SavedContentPage() {
             Daha sonra okumak veya başvurmak için kaydettiğiniz içerikler burada listelenir.
           </p>
         </div>
+        
+        {collections.length > 0 && renderCollectionSelector()}
         
         {isLoading ? (
           <div className="text-center py-12">
@@ -97,12 +186,20 @@ export default function SavedContentPage() {
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
             </svg>
-            <h2 className="text-xl font-medium mb-2">Henüz Kaydedilen İçerik Yok</h2>
+            <h2 className="text-xl font-medium mb-2">
+              {selectedCollection 
+                ? "Bu Koleksiyonda Henüz İçerik Yok" 
+                : "Henüz Kaydedilen İçerik Yok"}
+            </h2>
             <p className="text-foreground/70 max-w-md mx-auto mb-6">
-              Blog yazılarını okurken sağ üstteki yer işareti simgesine tıklayarak istediğiniz içerikleri kaydedebilirsiniz.
+              {selectedCollection
+                ? "Blog yazılarını okurken, içerikleri bu koleksiyona ekleyebilirsiniz."
+                : "Blog yazılarını okurken sağ üstteki yer işareti simgesine tıklayarak istediğiniz içerikleri kaydedebilirsiniz."}
             </p>
-            <Button href="/blog">
-              Blog Yazılarına Göz At
+            <Button asChild>
+              <Link href="/blog">
+                Blog Yazılarına Göz At
+              </Link>
             </Button>
           </div>
         ) : (
@@ -139,15 +236,24 @@ export default function SavedContentPage() {
                     <span>{formatRelativeTime(post.publishedAt)}</span>
                   </div>
                 </CardContent>
-                <CardFooter className="pt-4">
+                <CardFooter className="pt-4 flex gap-2">
                   <Button 
-                    href={`/blog/${post.slug}`} 
+                    asChild
                     variant="outline" 
                     size="sm" 
-                    className="w-full"
+                    className="flex-1"
                   >
-                    Okumaya Devam Et
+                    <Link href={`/blog/${post.slug}`}>
+                      Okumaya Devam Et
+                    </Link>
                   </Button>
+                  
+                  {/* Koleksiyona ekle butonu */}
+                  <AddToCollectionButton 
+                    contentId={post.id as string}
+                    contentType="blog_post"
+                    size="sm"
+                  />
                 </CardFooter>
               </Card>
             ))}
