@@ -352,12 +352,18 @@ const addView = async (
     
     // Daha önce görüntülenmediyse ekle
     if (!hasViewed) {
+      // Eğer duration undefined ise, bu alanı ekstra veriye eklememe
+      const extraData: Partial<View> = {};
+      if (duration !== undefined) {
+        extraData.duration = duration;
+      }
+      
       await setInteraction<View>(
         userId, 
         contentId, 
         contentType, 
         'view', 
-        { duration }
+        extraData
       );
     }
     

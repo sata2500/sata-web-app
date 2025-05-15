@@ -1,21 +1,25 @@
-// src/app/profil/page.tsx
+// src/app/profil/page.tsx sayfasına takip önerilerini ekleyelim
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Container } from '@/components/ui/container';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/auth-context';
 import { getUserNotificationSettings, updateUserNotificationSettings } from '@/lib/notification-service';
+import { getFollowStats } from '@/lib/follow-service'; // Yeni import
 import { NotificationPreferences } from '@/types/notification';
+import { FollowSuggestions } from '@/components/follow/follow-suggestions'; // Yeni import
 
 export default function ProfilePage() {
   const router = useRouter();
   const { user, loading, userProfile } = useAuth();
   const [notificationSettings, setNotificationSettings] = useState<NotificationPreferences | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [followStats, setFollowStats] = useState({ followersCount: 0, followingCount: 0 }); // Yeni state
   
   // Kullanıcı giriş yapmış mı kontrol et
   useEffect(() => {
@@ -24,23 +28,29 @@ export default function ProfilePage() {
     }
   }, [user, loading, router]);
   
-  // Bildirim ayarlarını yükle
+  // Bildirim ayarlarını ve takipçi istatistiklerini yükle
   useEffect(() => {
-    const loadNotificationSettings = async () => {
+    const loadProfileData = async () => {
       if (!user) return;
       
       try {
-        const settings = await getUserNotificationSettings(user.id);
+        // Paralel olarak bildirim ayarlarını ve takip istatistiklerini yükle
+        const [settings, stats] = await Promise.all([
+          getUserNotificationSettings(user.id),
+          getFollowStats(user.id)
+        ]);
+        
         setNotificationSettings(settings);
+        setFollowStats(stats);
       } catch (error) {
-        console.error('Bildirim ayarları yüklenirken hata:', error);
+        console.error('Profil bilgileri yüklenirken hata:', error);
       } finally {
         setIsLoading(false);
       }
     };
     
     if (user) {
-      loadNotificationSettings();
+      loadProfileData();
     }
   }, [user]);
   
@@ -59,7 +69,9 @@ export default function ProfilePage() {
     setNotificationSettings(updatedSettings);
     
     try {
-      await updateUserNotificationSettings(user.id, updatedSettings);
+      await updateUserNotificationSettings(user.id, {
+        [key]: value
+      });
     } catch (error) {
       console.error('Bildirim ayarları güncellenirken hata:', error);
       // Hata durumunda eski değeri geri yükle
@@ -105,6 +117,18 @@ export default function ProfilePage() {
                 </div>
                 <CardTitle className="text-2xl">{user.displayName}</CardTitle>
                 <p className="text-foreground/60 mt-1">{user.email}</p>
+                
+                {/* Takipçi/Takip istatistikleri */}
+                <div className="flex justify-center gap-6 mt-4">
+                  <Link href="/profil/takipcilerim" className="flex flex-col items-center">
+                    <span className="font-bold text-lg">{followStats.followersCount}</span>
+                    <span className="text-foreground/60 text-sm">Takipçi</span>
+                  </Link>
+                  <Link href="/profil/takip-ettiklerim" className="flex flex-col items-center">
+                    <span className="font-bold text-lg">{followStats.followingCount}</span>
+                    <span className="text-foreground/60 text-sm">Takip</span>
+                  </Link>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col gap-3 mt-4">
@@ -127,6 +151,11 @@ export default function ProfilePage() {
                 </div>
               </CardContent>
             </Card>
+            
+            {/* Takip Önerileri Kartı */}
+            <div className="mt-6">
+              <FollowSuggestions limit={3} />
+            </div>
           </div>
           
           {/* Sağ kolon - Bildirim tercihleri */}
@@ -226,6 +255,23 @@ export default function ProfilePage() {
                               className="sr-only peer"
                               checked={notificationSettings.replies}
                               onChange={(e) => handleUpdateNotificationSettings('replies', e.target.checked)}
+                            />
+                            <div className="w-11 h-6 bg-foreground/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                          </label>
+                        </div>
+                        
+                        {/* Yeni: Takip bildirimleri */}
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium">Takip Bildirimleri</div>
+                            <div className="text-sm text-foreground/60">Biri sizi takip ettiğinde bildirim alın</div>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              className="sr-only peer"
+                              checked={notificationSettings.follows}
+                              onChange={(e) => handleUpdateNotificationSettings('follows', e.target.checked)}
                             />
                             <div className="w-11 h-6 bg-foreground/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                           </label>

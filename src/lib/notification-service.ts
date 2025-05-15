@@ -14,6 +14,7 @@ import {
   Notification, 
   NotificationPreferences
 } from '@/types/notification';
+import { getUserProfile } from '@/lib/user-service'; // Takip bildirimi için eklendi
 
 // Koleksiyon adları
 const NOTIFICATION_COLLECTION = 'notifications';
@@ -261,7 +262,7 @@ export const createWelcomeNotification = async (
     title: 'SaTA\'ya Hoş Geldiniz',
     message: `Merhaba ${userName}! SaTA platformuna hoş geldiniz. Blog yazılarını keşfetmeye başlayabilir, kendi içeriklerinizi oluşturabilirsiniz.`,
     link: '/',
-    status: 'unread'
+    status: 'unread',
   });
 };
 
@@ -285,5 +286,30 @@ export const cleanupExpiredNotifications = async (): Promise<void> => {
     await Promise.all(deletePromises);
   } catch (error) {
     console.error('Bildirimleri temizlerken hata:', error);
+  }
+};
+
+// Takip bildirimini oluşturma fonksiyonu
+export const createFollowNotification = async (followerId: string, followedId: string): Promise<void> => {
+  try {
+    // Takipçi bilgilerini al
+    const follower = await getUserProfile(followerId);
+    
+    if (!follower) return;
+    
+    // Takip edilen kullanıcı için bildirim oluştur
+    await createNotification({
+      recipientId: followedId,
+      senderId: followerId,
+      senderName: follower.displayName,
+      senderPhoto: follower.photoURL || undefined,
+      type: 'follow',
+      title: 'Yeni Takipçi',
+      message: `${follower.displayName} sizi takip etmeye başladı.`,
+      link: `/profil/${followerId}`,
+      status: 'unread',
+    });
+  } catch (error) {
+    console.error('Takip bildirimi oluşturulurken hata:', error);
   }
 };
