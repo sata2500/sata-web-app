@@ -1,7 +1,6 @@
-// src/app/profil/kaydedilenler/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -22,10 +21,10 @@ import { getUserCollections, getCollectionBlogPosts } from '@/lib/collection-ser
 import { BlogPost } from '@/types/blog';
 import { Collection } from '@/types/collection';
 import { formatRelativeTime } from '@/lib/utils';
-// Koleksiyona ekle butonunu import et
 import { AddToCollectionButton } from '@/components/collections/add-to-collection-button';
 
-export default function SavedContentPage() {
+// Sayfa içeriğini ayrı bir bileşene taşı
+function SavedContentPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const collectionId = searchParams.get('collection');
@@ -248,7 +247,6 @@ export default function SavedContentPage() {
                     </Link>
                   </Button>
                   
-                  {/* Koleksiyona ekle butonu */}
                   <AddToCollectionButton 
                     contentId={post.id as string}
                     contentType="blog_post"
@@ -261,5 +259,20 @@ export default function SavedContentPage() {
         )}
       </div>
     </Container>
+  );
+}
+
+// Ana sayfa bileşeni - Suspense ile sarılmış
+export default function SavedContentPage() {
+  return (
+    <Suspense fallback={
+      <Container>
+        <div className="py-12 text-center">
+          <div className="animate-pulse">Yükleniyor...</div>
+        </div>
+      </Container>
+    }>
+      <SavedContentPageContent />
+    </Suspense>
   );
 }
