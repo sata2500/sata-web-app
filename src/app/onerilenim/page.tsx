@@ -1,8 +1,8 @@
 // src/app/onerilenim/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import { Container } from '@/components/ui/container';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -17,9 +17,12 @@ import {
 } from '@/lib/recommendation-service';
 import { RecommendationView, RecommendationFilter, RecommendationReason } from '@/types/recommendation';
 
-export default function RecommendationsPage() {
+// SearchParams kullanımı için ayrı bir bileşen oluşturalım
+function RecommendationsContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  // useSearchParams hook'unu buraya taşıdık
+  const searchParams = new URLSearchParams(window.location.search);
+  
   const { user, loading } = useAuth();
   
   const initialTab = searchParams.get('tab') || 'all';
@@ -342,5 +345,20 @@ export default function RecommendationsPage() {
         </Tabs>
       </div>
     </Container>
+  );
+}
+
+// Ana sayfa bileşeni - useSearchParams sorunları için Suspense ile sarılmış
+export default function RecommendationsPage() {
+  return (
+    <Suspense fallback={
+      <Container>
+        <div className="py-12 text-center">
+          <div className="animate-pulse">Yükleniyor...</div>
+        </div>
+      </Container>
+    }>
+      <RecommendationsContent />
+    </Suspense>
   );
 }
