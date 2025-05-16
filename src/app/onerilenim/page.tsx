@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Container } from '@/components/ui/container';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -17,15 +17,14 @@ import {
 } from '@/lib/recommendation-service';
 import { RecommendationView, RecommendationFilter, RecommendationReason } from '@/types/recommendation';
 
-// SearchParams kullanımı için ayrı bir bileşen oluşturalım
+// Suspense içerisinde kullanılacak içerik bileşeni
 function RecommendationsContent() {
   const router = useRouter();
-  // useSearchParams hook'unu buraya taşıdık
-  const searchParams = new URLSearchParams(window.location.search);
+  const searchParams = useSearchParams();
   
   const { user, loading } = useAuth();
   
-  const initialTab = searchParams.get('tab') || 'all';
+  const initialTab = searchParams?.get('tab') || 'all';
   
   const [activeTab, setActiveTab] = useState<string>(initialTab);
   const [recommendations, setRecommendations] = useState<RecommendationView[]>([]);
