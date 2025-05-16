@@ -1,3 +1,4 @@
+// src/app/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { Container } from '@/components/ui/container';
@@ -6,6 +7,7 @@ import { HeroSlider } from '@/components/home/hero-slider';
 import { FeaturedPosts } from '@/components/home/featured-posts';
 import { AboutSection } from '@/components/home/about-section';
 import { SchemaMarkup } from '@/components/seo/schema-markup';
+import { PersonalizedRecommendations } from '@/components/recommendations/personalized-recommendations';
 import { createMetadata } from '@/app/metadata';
 
 export const metadata: Metadata = createMetadata({
@@ -32,6 +34,13 @@ export default function HomePage() {
       
       {/* Hero Slider */}
       <HeroSlider />
+      
+      {/* Kişiselleştirilmiş Öneriler */}
+      <Container>
+        <div className="py-12">
+          <PersonalizedRecommendations />
+        </div>
+      </Container>
       
       {/* Öne Çıkan Blog Yazıları */}
       <Container>

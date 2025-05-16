@@ -10,6 +10,7 @@ import { CommentSection } from '@/components/blog/comment-section';
 import { SchemaMarkup } from '@/components/seo/schema-markup';
 import { BlogViewTracker } from '@/components/blog/blog-view-tracker';
 import { InteractionBar } from '@/components/interactions/interaction-bar';
+import { SimilarContent } from '@/components/recommendations/similar-content';
 import { getBlogPostBySlug } from '@/lib/blog-service';
 import { createMetadata } from '@/app/metadata';
 
@@ -146,6 +147,11 @@ export default async function BlogPostPage({
                 size="lg"
               />
             </div>
+          </div>
+          
+          {/* Benzer İçerikler - YENİ EKLENEN BÖLÜM */}
+          <div className="my-8 pt-6 border-t">
+            <SimilarContent contentId={post.id as string} limit={3} />
           </div>
           
           {/* Yorumlar */}
