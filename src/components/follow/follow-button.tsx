@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 interface FollowButtonProps {
   userId: string;
   initialFollowing?: boolean;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'link' | 'danger';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'link';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   onFollowChange?: (following: boolean) => void;
