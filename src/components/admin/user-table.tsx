@@ -275,7 +275,7 @@ export function UserTable({ initialUsers }: UserTableProps) {
               İptal
             </Button>
             <Button
-              variant="danger"
+              variant="error"
               onClick={executeConfirmedAction}
               disabled={isUpdating}
             >
